@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
 import axios from 'axios'
 import "./LoginForm.css";
 
@@ -6,20 +8,30 @@ const RegisterForm = ( {onRegister, switchToLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     try {
       const res = await axios.post('http://localhost:8080/register', {
         username,
         password,
       });
-      if (res.status === 200) {
-        onLogin(username); // Notify parent
+      if (res.status === 201) {
+        setSuccess('Registration successful! You can now log in.');
+        setUsername('');
+        setPassword('');
+        // Optionally, you could auto-switch to login
+        // onRegister();
       }
     } catch (err) {
-      setError('Invalid username or password');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Registration failed.');
+      }
     }
   };
 
@@ -46,8 +58,13 @@ const RegisterForm = ( {onRegister, switchToLogin }) => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type="submit">Register</button>
+        <Button type="submit" variant="contained">Register</Button>
         {error && <div style={{color: 'red'}}>{error}</div>}
+        {success && <div style={{color: 'green'}}>{success}</div>}
+        <div>
+          Already have an account?{' '}
+          <Link underline="hover" onClick={switchToLogin}>Log In</Link>
+        </div>
       </form>
     </div>
   );

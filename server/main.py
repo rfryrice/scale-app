@@ -1,6 +1,11 @@
 from flask import request, jsonify
 from config import app, db
 from models import Contact, User
+import csv
+import os
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -97,6 +102,42 @@ def delete_contact(user_id):
     db.session.commit()
 
     return jsonify({"message": "User deleted!"}), 200
+
+
+@app.route("/list-csv", methods=["GET"])
+def list_csv():
+    # Ensure the data directory exists
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
+
+    # List only .csv files
+    csv_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.csv')]
+    return jsonify({"files": csv_files})
+
+
+@app.route("/dashboard", methods=["GET"])
+def dashboard():
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
+
+    csv_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.csv')]
+
+
+
+    data = []
+    # Assume the CSV file is in the server directory and has columns: 'x', 'y'
+    with open("data/timestamped_data_js.csv", newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            # Convert x and y to numbers if needed
+            data.append({
+                'x': row['Timestamp'],
+                'y': float(row['Value'])
+            })
+
+            
+    return jsonify({"data": data})
+
 
 
 @app.route("/api/users", methods=["GET"])

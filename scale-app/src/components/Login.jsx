@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
 import axios from 'axios'
 import "./LoginForm.css";
 
@@ -24,7 +26,6 @@ const LoginForm = ( {onLogin, switchToRegister }) => {
   };
 
 
-
   return (
     <div id="login-form">
       <h1>Login</h1>
@@ -46,8 +47,12 @@ const LoginForm = ( {onLogin, switchToRegister }) => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type="submit">Log In</button>
+        <Button type="submit" variant="contained">Submit</Button>
         {error && <div style={{color: 'red'}}>{error}</div>}
+        <div>
+          Don't have an account?{' '}
+          <Link href="#" underline="hover" onClick={switchToRegister}>Register</Link>
+        </div>
       </form>
     </div>
   );
