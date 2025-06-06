@@ -1,6 +1,47 @@
 from flask import request, jsonify
 from config import app, db
-from models import Contact
+from models import Contact, User
+
+@app.route("/register", methods=["POST"])
+def register():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+
+    if not username or not password:
+        return jsonify({"message": "Username and password required"}), 400
+
+    if User.query.filter_by(username=username).first():
+        return jsonify({"message": "Username already exists"}), 400
+
+    new_user = User(username=username)
+    new_user.set_password(password)
+
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+    except Exception as e:
+        return jsonify({"message": str(e)}), 400
+
+    return jsonify({"message": "User registered!"}), 201
+
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+
+    if not username or not password:
+        return jsonify({"message": "Username and password required"}), 400
+
+    user = User.query.filter_by(username=username).first()
+    
+    if user and user.check_password(password):
+        return jsonify({"message": "Login successful!"}), 200
+    else:
+        return jsonify({"message": "Invalid username or password"}), 401
+
+
 
 @app.route("/contacts", methods=["GET"])
 def get_contacts():
@@ -19,9 +60,9 @@ def create_contact():
             400,
         )
     
-    new_contact = Contact(username=username, password=password)
+    new_user = Contact(username=username, password=password)
     try:
-        db.session.add(new_contact)
+        db.session.add(new_user)
         db.session.commit
     except Exception as e:
         return jsonify({"message": str(e)}), 400
