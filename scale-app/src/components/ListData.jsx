@@ -6,7 +6,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 
-function ListData() {
+function ListData({ onFileSelect, selectedFile }) {
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
 
@@ -16,6 +16,12 @@ function ListData() {
       .then((res) => setFiles(res.data.files))
       .catch((err) => setError(err.message));
   }, []);
+
+  const handleClick = (filename) => {
+    if (onFileSelect) {
+      onFileSelect(filename);
+    }
+  };
 
   return (
     <Paper elevation={3} sx={{ p: 2, maxWidth: 400, margin: "2rem auto" }}>
@@ -30,7 +36,16 @@ function ListData() {
           </ListItem>
         ) : (
           files.map((file, idx) => (
-            <ListItem key={idx}>
+            <ListItem
+              button
+              key={idx}
+              onClick={() => handleClick(file)}
+              selected={file === selectedFile}
+              sx={{
+                backgroundColor: file === selectedFile ? "primary.light" : "",
+                cursor: "pointer"
+              }}
+            >
               <ListItemText primary={file} />
             </ListItem>
           ))

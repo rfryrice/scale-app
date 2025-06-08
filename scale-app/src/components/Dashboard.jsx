@@ -11,44 +11,83 @@ function parseTimestamp(ts) {
   return isNaN(d.getTime()) ? null : d;
 }
 
-function Dashboard() {
+// Calculate 5-point moving average for an array of numbers
+function movingAverage(values, windowSize = 5) {
+  if (!Array.isArray(values)) return [];
+  const avg = [];
+  for (let i = 0; i < values.length; i++) {
+    if (i < windowSize - 1) {
+      avg.push(null); // Not enough data points
+    } else {
+      const window = values.slice(i - windowSize + 1, i + 1);
+      avg.push(window.reduce((sum, v) => sum + v, 0) / window.length);
+    }
+  }
+  return avg;
+}
+
+function Dashboard({ selectedFile }) {
   const [data, setData] = useState([]);
+  const [filename, setFilename] = useState(selectedFile);
 
   useEffect(() => {
-    axios.get('http://localhost:8080/dashboard')
+    if (!selectedFile) return;
+    setFilename(selectedFile);
+    axios
+      .get(`http://localhost:8080/dashboard?file=${encodeURIComponent(selectedFile)}`)
       .then(res => setData(res.data.data))
-      .catch(err => console.error(err));
-  }, []);
+      .catch(err => setData([]));
+  }, [selectedFile]);
 
   const xData = data.map(point => parseTimestamp(point.Timestamp)).filter(Boolean);
   const yData = data
     .map(point => point.Value)
     .slice(0, xData.length); // Ensure lengths match
 
+const maData = movingAverage(yData, 5)
+
   return (
-    <div>
+    <div style={{ minWidth: 600 }}>
       <h2>Dashboard</h2>
-      <LineChart
-        xAxis={[
-          {
-            data: xData,
-            label: "Timestamp",
-            scaleType: 'time', // You can use 'time' if values are valid dates
-            valueFormatter: (date) => {
-              if (!(date instanceof Date) || isNaN(date)) return '';
-              return date.toLocaleString();
-            }
-          }
-        ]}
-        series={[
-          {
-            data: yData,
-            label: "Value"
-          }
-        ]}
-        width={600}
-        height={350}
-      />
+      {filename && (
+        <div style={{ marginBottom: "1rem" }}>
+          File: <strong>{filename}</strong>
+        </div>
+      )}
+      {xData.length > 0 ? (
+        <LineChart
+          xAxis={[
+            {
+              data: xData,
+              label: "Timestamp",
+              scaleType: "time",
+              valueFormatter: (date) => {
+                if (!(date instanceof Date) || isNaN(date)) return "";
+                return date.toLocaleString();
+              },
+            },
+          ]}
+          series={[
+            {
+              data: yData,
+              label: "Value",
+              color: "#4254fb"
+            },
+            {
+              data: maData,
+              label: "5-point Moving Avg",
+              color: "#ff9100",
+            },
+          ]}
+          width={600}
+          height={350}
+        />
+      ) : (
+        <div>No data available for this file.</div>
+      )}
+      <div style={{ marginTop: "1em", fontSize: "0.9em", color: "#888" }}>
+        Purple: Original Value &nbsp;|&nbsp; Orange: 5-point Moving Average
+      </div>
     </div>
   );
 }

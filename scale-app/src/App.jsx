@@ -1,5 +1,7 @@
 import axios from "axios"
 import { useState, useEffect } from 'react'
+import { ColorModeContext, useMode } from './theme'
+import { CssBaseline, ThemeProvider } from "@mui/material"
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
@@ -7,13 +9,15 @@ import LoginForm from "./components/Login"
 import RegisterForm from "./components/Register"
 import Dashboard from "./components/Dashboard"
 import ListData from "./components/ListData"
+import TopBar from "./scenes/global/TopBar"
+import SideBar from "./scenes/global/SideBar";
 
 function App() {
-  const [count, setCount] = useState(0)
-  const [array, setArray] = useState([])
+  const [theme, colorMode] = useMode()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [username, setUsername] = useState('')
   const [showRegister, setShowRegister] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
 
   const fetchAPI = async() => {
@@ -50,52 +54,66 @@ function App() {
   const switchToRegister = () => setShowRegister(true);
   const switchToLogin = () => setShowRegister(false);
 
-
+  // Handle file selection from ListData
+  const handleFileSelect = (filename) => {
+    setSelectedFile(filename);
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Scale-App</h1>
-      <p>Interface with scale and livestream using this app</p>
+    <ColorModeContext.Provider value={colorMode}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline/>
+        <div className="app">
+          <SideBar isSidebar={isSidebar} />
+          <main className="content">
+            <TopBar/>
 
-      <div className="card">
-        {isLoggedIn ? (
-          <>
-            <p>Welcome, {username}!</p>
-            <button onClick={handleLogout}>Log out</button>
             <div>
-              <button onClick={() => setCount((count) => count + 1)}>
-                count is {count}
-              </button>
+              <a href="https://vite.dev" target="_blank">
+                <img src={viteLogo} className="logo" alt="Vite logo" />
+              </a>
+              <a href="https://react.dev" target="_blank">
+                <img src={reactLogo} className="logo react" alt="React logo" />
+              </a>
             </div>
-            <ListData />
+            <h1>Scale-App</h1>
+            <p>Interface with scale and livestream using this app</p>
 
-            <Dashboard />
+            <div className="card">
+              {isLoggedIn ? (
+                <>
+                  <p>Welcome, {username}!</p>
+                  <button onClick={handleLogout}>Log out</button>
 
-          </>
-        ) : showRegister ? (
-          <RegisterForm
-            onRegister={switchToLogin}
-            switchToLogin={switchToLogin}
-          />
-        ) : (
-          <LoginForm
-            onLogin={handleLogin}
-            switchToRegister={switchToRegister}
-          />
-        )}
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+                  {/* Flex layout for ListData and Dashboard */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "2rem" }}>
+                    <ListData onFileSelect={handleFileSelect} selectedFile={selectedFile} />
+                    <Dashboard selectedFile={selectedFile} />
+                  </div>
+                </>
+              ) : showRegister ? (
+                <RegisterForm
+                  onRegister={switchToLogin}
+                  switchToLogin={switchToLogin}
+                />
+              ) : (
+                <LoginForm
+                  onLogin={handleLogin}
+                  switchToRegister={switchToRegister}
+                />
+              )}
+            </div>
+            <p className="read-the-docs">
+              Click on the Vite and React logos to learn more
+            </p>
+
+
+
+          </main>
+        </div>
+
+      </ThemeProvider>
+    </ColorModeContext.Provider>
   )
 }
 
