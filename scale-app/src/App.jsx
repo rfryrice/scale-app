@@ -15,6 +15,7 @@ import SideBar from "./scenes/global/SideBar";
 function App() {
   const [theme, colorMode] = useMode()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isSidebar, setIsSidebar] = useState(true);
   const [username, setUsername] = useState('')
   const [showRegister, setShowRegister] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -66,7 +67,7 @@ function App() {
         <div className="app">
           <SideBar isSidebar={isSidebar} />
           <main className="content">
-            <TopBar/>
+            <TopBar setIsSidebar={setIsSidebar} />
 
             <div>
               <a href="https://vite.dev" target="_blank">

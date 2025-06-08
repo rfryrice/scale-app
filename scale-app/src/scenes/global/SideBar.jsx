@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import { Link } from "react-router-dom";
-import 'react-pro-sidebar/dist/css/styles.css';
+import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
@@ -24,7 +24,7 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
     <MenuItem
       active={selected === title}
       style={{
-        color: colors.grey[100],
+        color: colors.grayAccent[100],
       }}
       onClick={() => setSelected(title)}
       icon={icon}
@@ -69,7 +69,7 @@ const SideBar = () => {
             icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
             style={{
               margin: "10px 0 20px 0",
-              color: colors.grey[100],
+              color: colors.grayAccent[100],
             }}
           >
             {!isCollapsed && (
@@ -79,7 +79,7 @@ const SideBar = () => {
                 alignItems="center"
                 ml="15px"
               >
-                <Typography variant="h3" color={colors.grey[100]}>
+                <Typography variant="h3" color={colors.grayAccent[100]}>
                   SCALE-APP
                 </Typography>
                 <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
@@ -103,7 +103,7 @@ const SideBar = () => {
               <Box textAlign="center">
                 <Typography
                   variant="h2"
-                  color={colors.grey[100]}
+                  color={colors.grayAccent[100]}
                   fontWeight="bold"
                   sx={{ m: "10px 0 0 0" }}
                 >
@@ -127,21 +127,21 @@ const SideBar = () => {
 
             <Typography
               variant="h6"
-              color={colors.grey[300]}
+              color={colors.grayAccent[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
               Data
             </Typography>
             <Item
               title="Contacts Information"
-              to="/contacts"
+              to="/"
               icon={<ContactsOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="Files"
-              to="/data"
+              to="/"
               icon={<ReceiptOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
@@ -149,21 +149,21 @@ const SideBar = () => {
 
             <Typography
               variant="h6"
-              color={colors.grey[300]}
+              color={colors.grayAccent[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
               Pages
             </Typography>
             <Item
               title="Profile Form"
-              to="/form"
+              to="/"
               icon={<PersonOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="FAQ Page"
-              to="/faq"
+              to="/"
               icon={<HelpOutlineOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
@@ -171,14 +171,14 @@ const SideBar = () => {
 
             <Typography
               variant="h6"
-              color={colors.grey[300]}
+              color={colors.grayAccent[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
               Charts
             </Typography>
             <Item
               title="Line Chart"
-              to="/line"
+              to="/"
               icon={<TimelineOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
