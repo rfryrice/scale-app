@@ -1,7 +1,7 @@
 import axios from "axios"
 import { useState, useEffect } from 'react'
 import { ColorModeContext, useMode } from './theme'
-import { CssBaseline, ThemeProvider } from "@mui/material"
+import { CssBaseline, Drawer, ThemeProvider } from "@mui/material"
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
@@ -10,7 +10,7 @@ import RegisterForm from "./components/Register"
 import Dashboard from "./components/Dashboard"
 import ListData from "./components/ListData"
 import TopBar from "./scenes/global/TopBar"
-import SideBar from "./scenes/global/SideBar";
+import PersistentDrawerLeft from "./scenes/global/Drawer";
 
 function App() {
   const [theme, colorMode] = useMode()
@@ -20,12 +20,12 @@ function App() {
   const [showRegister, setShowRegister] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
 
-
-  const fetchAPI = async() => {
+// Example api call to backend
+/*   const fetchAPI = async() => {
     const response = await axios.get("http://localhost:8080/api/users")
     console.log(response.data.users)
     setArray(response.data.users)
-  };
+  }; */
 
   useEffect(() => {
     // Restore login state from localStorage
@@ -33,7 +33,6 @@ function App() {
     const savedUsername = localStorage.getItem('username') || '';
     setIsLoggedIn(savedLogin);
     setUsername(savedUsername);
-    fetchAPI();
   }, []);
 
   const handleLogin = (user) => {
@@ -65,7 +64,7 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline/>
         <div className="app">
-          <SideBar isSidebar={isSidebar} />
+          <PersistentDrawerLeft isSidebar={isSidebar} />
           <main className="content">
             <TopBar setIsSidebar={setIsSidebar} />
 

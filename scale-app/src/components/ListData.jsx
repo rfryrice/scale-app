@@ -3,6 +3,7 @@ import axios from "axios";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
+import ListItemButton from "@mui/material/ListItemButton"
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 
@@ -36,17 +37,14 @@ function ListData({ onFileSelect, selectedFile }) {
           </ListItem>
         ) : (
           files.map((file, idx) => (
-            <ListItem
-              button
-              key={idx}
-              onClick={() => handleClick(file)}
-              selected={file === selectedFile}
-              sx={{
-                backgroundColor: file === selectedFile ? "primary.light" : "",
-                cursor: "pointer"
-              }}
-            >
-              <ListItemText primary={file} />
+            <ListItem key={idx} disablePadding>
+              <ListItemButton 
+                component="a"
+                onClick={() => handleClick(file)}
+                selected={file === selectedFile}
+              >           
+                <ListItemText primary={file} />
+              </ListItemButton>
             </ListItem>
           ))
         )}
