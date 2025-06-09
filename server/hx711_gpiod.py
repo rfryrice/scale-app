@@ -19,9 +19,12 @@ class HX711:
         self.offset = 0
         self.scale = 1
 
-        # Prepare line settings
-        dout_settings = gpiod.LineSettings(direction=gpiod.LineDirection.INPUT)
-        pd_sck_settings = gpiod.LineSettings(direction=gpiod.LineDirection.OUTPUT)
+        # Prepare line settings, using gpiod.line.LineSettings and gpiod.line.Direction
+        dout_settings = gpiod.line.LineSettings()
+        dout_settings.direction = gpiod.line.Direction.INPUT
+
+        pd_sck_settings = gpiod.line.LineSettings()
+        pd_sck_settings.direction = gpiod.line.Direction.OUTPUT
 
         # Request both lines with correct settings using config dict
         config = {
@@ -29,7 +32,7 @@ class HX711:
             self.pd_sck_pin: pd_sck_settings,
         }
         # Set PD_SCK low initially
-        output_values = {self.pd_sck_pin: gpiod.LineValue.INACTIVE}
+        output_values = {self.pd_sck_pin: gpiod.line.Value.INACTIVE}
 
         # Request lines from the chip (multi-line request)
         self.lines = gpiod.Chip(chip).request_lines(
@@ -68,7 +71,7 @@ class HX711:
         Check if HX711 is ready (DOUT goes LOW).
         """
         # get_values returns a list of values for each requested line
-        return self.lines.get_values()[self.dout_idx] == gpiod.LineValue.INACTIVE
+        return self.lines.get_values()[self.dout_idx] == gpiod.line.Value.INACTIVE
 
     def set_pd_sck(self, value):
         """
@@ -76,7 +79,7 @@ class HX711:
         """
         values = [None] * len(self.line_indices)
         # Only set the PD_SCK index, leave others as None
-        values[self.pd_sck_idx] = gpiod.LineValue.ACTIVE if value else gpiod.LineValue.INACTIVE
+        values[self.pd_sck_idx] = gpiod.line.Value.ACTIVE if value else gpiod.line.Value.INACTIVE
         self.lines.set_values(values)
 
     def _read_raw(self):
@@ -97,7 +100,7 @@ class HX711:
             count = count << 1
             self.set_pd_sck(0)
             time.sleep(0.000001)
-            if self.lines.get_values()[self.dout_idx] == gpiod.LineValue.ACTIVE:
+            if self.lines.get_values()[self.dout_idx] == gpiod.line.Value.ACTIVE:
                 count += 1
 
         # Pulse clock to set gain/channel for next conversion
