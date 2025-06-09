@@ -12,6 +12,7 @@ import ListData from "./components/ListData"
 import LiveStream from "./components/LiveStream"
 import TopBar from "./scenes/global/TopBar"
 import PersistentDrawerLeft from "./scenes/global/Drawer"
+import SensorControl from "./components/SensorControl"
 
 function App() {
   const [theme, colorMode] = useMode()
@@ -93,6 +94,7 @@ function App() {
                     <ListData onFileSelect={handleFileSelect} selectedFile={selectedFile} />
                     <Dashboard selectedFile={selectedFile} />
                     <LiveStream />
+                    <SensorControl />
                   </div>
                 </>
               ) : showRegister ? (

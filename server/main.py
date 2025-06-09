@@ -2,6 +2,7 @@ from flask import request, jsonify, Response
 from config import app, db
 from models import Contact, User
 from video_streamer import VideoStreamer, CameraBusyException
+from sensor import calibrate, read_sensor_loop, hx
 import csv
 import os
 import time
@@ -13,6 +14,10 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 recording_lock = threading.Lock()
 recording_streamer = None
 recording_filename = None
+
+# -- Sensor thread --
+sensor_thread = None
+sensor_thread_running = False
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -157,6 +162,30 @@ def dashboard():
 # /line
 
 # Sensor Routes
+@app.route('/sensor/calibrate', methods=['POST'])
+def calibrate_route():
+    try:
+        calibrate(hx)
+        return jsonify({"message": "Calibration successful."}), 200
+    except Exception as e:
+        return jsonify({"message": f"Calibration failed: {str(e)}"}), 500
+
+@app.route('/sensor/start', methods=['POST'])
+def start_sensor_loop():
+    global sensor_thread, sensor_thread_running
+    if sensor_thread_running:
+        return jsonify({"message": "Sensor reading loop already running."}), 400
+    sensor_thread = threading.Thread(target=read_sensor_loop, daemon=True)
+    sensor_thread.start()
+    sensor_thread_running = True
+    return jsonify({"message": "Sensor reading loop started."}), 200
+
+@app.route('/sensor/status', methods=['GET'])
+def sensor_status():
+    return jsonify({"running": sensor_thread_running}), 200
+
+
+# Stream Routes
 @app.route('/video_feed')
 def video_feed():
     def generate():
