@@ -3,13 +3,13 @@ import gpiod
 
 class HX711:
     """
-    HX711 ADC interface using python-gpiod 2.x (e.g. 2.3.0) API.
+    HX711 ADC interface using python-gpiod 2.x API (tested with v2.3.0).
     """
     def __init__(self, dout_pin, pd_sck_pin, chip='/dev/gpiochip0', gain=128):
         """
         dout_pin: BCM GPIO number for DOUT (data output of HX711)
         pd_sck_pin: BCM GPIO number for PD_SCK (clock pin of HX711)
-        chip: gpiod chip device (default is '/dev/gpiochip0' for Raspberry Pi 5+)
+        chip: gpiod chip device (e.g. '/dev/gpiochip0')
         gain: 128, 64, or 32
         """
         self.dout_pin = dout_pin
@@ -21,22 +21,23 @@ class HX711:
         # Open the GPIO chip using python-gpiod 2.x API
         self.chip = gpiod.Chip(chip)
 
-        # Request DOUT as input, PD_SCK as output
-        self.dout_line = self.chip.request_lines(
-            self.dout_pin,
+        # DOUT as input
+        self.dout_request = self.chip.request_lines(
             consumer="hx711_dout",
-            direction=gpiod.Line.REQUEST_DIRECTION_INPUT
+            lines=[self.dout_pin],
+            direction=gpiod.LineDirection.INPUT
         )
-        self.pd_sck_line = self.chip.request_lines(
-            self.pd_sck_pin,
+        # PD_SCK as output, start low
+        self.pd_sck_request = self.chip.request_lines(
             consumer="hx711_pd_sck",
-            direction=gpiod.Line.REQUEST_DIRECTION_OUTPUT,
+            lines=[self.pd_sck_pin],
+            direction=gpiod.LineDirection.OUTPUT,
             default_vals=[0]
         )
 
         self.set_gain(gain)
-        # Make sure clock is low to start
-        self.pd_sck_line.set_value(0)
+        # Ensure clock is low
+        self.pd_sck_request.set_values([0])
 
     def set_gain(self, gain):
         """
@@ -56,7 +57,8 @@ class HX711:
         """
         Check if HX711 is ready (DOUT goes LOW).
         """
-        return self.dout_line.get_value() == 0
+        # get_values returns a list of values for each line
+        return self.dout_request.get_values()[0] == 0
 
     def _read_raw(self):
         """
@@ -71,19 +73,19 @@ class HX711:
 
         count = 0
         for _ in range(24):
-            self.pd_sck_line.set_value(1)
+            self.pd_sck_request.set_values([1])
             time.sleep(0.000001)
             count = count << 1
-            self.pd_sck_line.set_value(0)
+            self.pd_sck_request.set_values([0])
             time.sleep(0.000001)
-            if self.dout_line.get_value():
+            if self.dout_request.get_values()[0]:
                 count += 1
 
         # Pulse clock to set gain/channel for next conversion
         for _ in range(self.gain_pulses):
-            self.pd_sck_line.set_value(1)
+            self.pd_sck_request.set_values([1])
             time.sleep(0.000001)
-            self.pd_sck_line.set_value(0)
+            self.pd_sck_request.set_values([0])
             time.sleep(0.000001)
 
         # Convert from 24 bit signed (two's complement)
@@ -121,13 +123,13 @@ class HX711:
         """
         Power down the HX711.
         """
-        self.pd_sck_line.set_value(0)
-        self.pd_sck_line.set_value(1)
+        self.pd_sck_request.set_values([0])
+        self.pd_sck_request.set_values([1])
         time.sleep(0.0001)
 
     def power_up(self):
         """
         Power up the HX711.
         """
-        self.pd_sck_line.set_value(0)
+        self.pd_sck_request.set_values([0])
         time.sleep(0.0001)
