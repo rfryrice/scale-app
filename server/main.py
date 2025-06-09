@@ -1,7 +1,7 @@
 from flask import request, jsonify, Response
 from config import app, db
 from models import Contact, User
-from video_streamer import VideoStreamer
+from video_streamer import VideoStreamer, CameraBusyException
 import csv
 import os
 import time
@@ -160,7 +160,14 @@ def dashboard():
 @app.route('/video_feed')
 def video_feed():
     def generate():
-        streamer = VideoStreamer()
+        try:
+            streamer = VideoStreamer()
+        except CameraBusyException:
+            # Instead of streaming, yield a single error frame
+            yield (b'--frame\r\nContent-Type: text/plain\r\n\r\n'
+                   b'Camera is currently in use by another user.\r\n')
+            return
+
         try:
             while True:
                 frame = streamer.get_jpeg()
