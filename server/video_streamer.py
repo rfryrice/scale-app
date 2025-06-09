@@ -1,10 +1,19 @@
-import cv2
 import threading
 import time
+import numpy as np
+
+from picamera2 import Picamera2, Preview
+import cv2
 
 class VideoStreamer:
     def __init__(self):
-        self.cap = cv2.VideoCapture(0)
+        self.picam2 = Picamera2()
+        # Configure camera
+        video_config = self.picam2.create_video_configuration(
+            main={"size": (640, 480), "format": "RGB888"}
+        )
+        self.picam2.configure(video_config)
+        self.picam2.start()
         self.recording = False
         self.writer = None
         self.frame = None
@@ -14,30 +23,32 @@ class VideoStreamer:
 
     def _update_frame(self):
         while self.running:
-            ret, frame = self.cap.read()
-            if ret:
-                with self.lock:
-                    self.frame = frame
-                if self.recording and self.writer:
-                    self.writer.write(frame)
-            else:
-                time.sleep(0.1)  # Avoid busy loop if no frame
+            frame = self.picam2.capture_array()  # Returns a numpy array (RGB)
+            with self.lock:
+                self.frame = frame
+            if self.recording and self.writer and self.frame is not None:
+                # OpenCV expects BGR format
+                bgr_frame = cv2.cvtColor(self.frame, cv2.COLOR_RGB2BGR)
+                self.writer.write(bgr_frame)
+            time.sleep(0.03)  # ~30 FPS
 
     def get_jpeg(self):
         with self.lock:
             if self.frame is None:
                 return None
-            ret, jpeg = cv2.imencode('.jpg', self.frame)
+            # Convert RGB to BGR for OpenCV
+            bgr_frame = cv2.cvtColor(self.frame, cv2.COLOR_RGB2BGR)
+            ret, jpeg = cv2.imencode('.jpg', bgr_frame)
             return jpeg.tobytes() if ret else None
 
     def start_recording(self, filename="output.avi"):
         if not self.recording:
-            fourcc = cv2.VideoWriter_fourcc(*'XVID')
             with self.lock:
                 if self.frame is not None:
                     h, w = self.frame.shape[:2]
                 else:
                     h, w = 480, 640  # default
+                fourcc = cv2.VideoWriter_fourcc(*'XVID')
                 self.writer = cv2.VideoWriter(filename, fourcc, 20.0, (w, h))
             self.recording = True
 
@@ -51,4 +62,4 @@ class VideoStreamer:
     def release(self):
         self.running = False
         self.stop_recording()
-        self.cap.release()
+        self.picam2.stop()
