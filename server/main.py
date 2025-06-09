@@ -1,11 +1,14 @@
-from flask import request, jsonify
+from flask import request, jsonify, Response
 from config import app, db
 from models import Contact, User
+from video_streamer import VideoStreamer
 import csv
 import os
+import time
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
+streamer = VideoStreamer()
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -123,20 +126,56 @@ def dashboard():
     csv_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.csv')]
 
 
+    # Get filename from query parameter, default to first csv file if not present
+    filename = request.args.get('file')
+    if not filename or filename not in csv_files:
+        if csv_files:
+            filename = csv_files[0]
+        else:
+            return jsonify({"data": [], "csv_files": []})
+    
 
     data = []
-    # Assume the CSV file is in the server directory and has columns: 'x', 'y'
-    with open("data/timestamped_data_js.csv", newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            # Convert x and y to numbers if needed
-            data.append({
-                'x': row['Timestamp'],
-                'y': float(row['Value'])
-            })
+    with open(os.path.join(DATA_DIR, filename), newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            # Adapt to your column names, here we assume 'Timestamp' and 'Value'
+            for row in reader:
+                data.append({
+                    'Timestamp': row['Timestamp'],
+                    'Value': float(row['Value'])
+                })
+    return jsonify({"data": data, "csv_files": csv_files})
 
-            
-    return jsonify({"data": data})
+
+
+# ROUTES TO MAKE:
+# /data
+# /line
+
+# Sensor Routes
+@app.route('/video_feed')
+def video_feed():
+    def generate():
+        while True:
+            frame = streamer.get_jpeg()
+            if frame:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            else:
+                time.sleep(0.1)
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/start_recording', methods=['POST'])
+def start_recording():
+    filename = request.json.get('filename', 'output.avi')
+    streamer.start_recording(filename)
+    return jsonify({"message": "Recording started"})
+
+@app.route('/stop_recording', methods=['POST'])
+def stop_recording():
+    streamer.stop_recording()
+    return jsonify({"message": "Recording stopped"})
+
 
 
 

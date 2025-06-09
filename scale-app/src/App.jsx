@@ -9,16 +9,19 @@ import LoginForm from "./components/Login"
 import RegisterForm from "./components/Register"
 import Dashboard from "./components/Dashboard"
 import ListData from "./components/ListData"
+import LiveStream from "./components/LiveStream"
 import TopBar from "./scenes/global/TopBar"
-import PersistentDrawerLeft from "./scenes/global/Drawer";
+import PersistentDrawerLeft from "./scenes/global/Drawer"
 
 function App() {
   const [theme, colorMode] = useMode()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [isSidebar, setIsSidebar] = useState(true);
+  const [isSidebar, setIsSidebar] = useState(true)
   const [username, setUsername] = useState('')
-  const [showRegister, setShowRegister] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [showRegister, setShowRegister] = useState(false)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
 
 // Example api call to backend
 /*   const fetchAPI = async() => {
@@ -64,9 +67,9 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline/>
         <div className="app">
-          <PersistentDrawerLeft isSidebar={isSidebar} />
+          <PersistentDrawerLeft open={drawerOpen} onClose={() => setDrawerOpen(false)} isSidebar={isSidebar} />
           <main className="content">
-            <TopBar setIsSidebar={setIsSidebar} />
+            <TopBar setIsSidebar={setIsSidebar} onDrawerOpen={() => setDrawerOpen(true)} />
 
             <div>
               <a href="https://vite.dev" target="_blank">
@@ -86,9 +89,10 @@ function App() {
                   <button onClick={handleLogout}>Log out</button>
 
                   {/* Flex layout for ListData and Dashboard */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "2rem" }}>
+                  <div className="dashboard">
                     <ListData onFileSelect={handleFileSelect} selectedFile={selectedFile} />
                     <Dashboard selectedFile={selectedFile} />
+                    <LiveStream />
                   </div>
                 </>
               ) : showRegister ? (

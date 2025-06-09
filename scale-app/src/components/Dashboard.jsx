@@ -47,7 +47,7 @@ function Dashboard({ selectedFile }) {
 const maData = movingAverage(yData, 5)
 
   return (
-    <div style={{ minWidth: 600 }}>
+    <div style={{ minWidth: 600}}>
       <h2>Dashboard</h2>
       {filename && (
         <div style={{ marginBottom: "1rem" }}>
