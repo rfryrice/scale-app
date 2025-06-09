@@ -78,7 +78,7 @@ class HX711:
         Set PD_SCK line (0 or 1).
         """
         self.lines.set_value(
-            1,
+            self.pd_sck_pin,
             gpiod.line.Value.ACTIVE if value else gpiod.line.Value.INACTIVE
         )
 
