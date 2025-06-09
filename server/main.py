@@ -5,10 +5,14 @@ from video_streamer import VideoStreamer
 import csv
 import os
 import time
+import threading
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
-streamer = VideoStreamer()
+# -- Recording controller --
+recording_lock = threading.Lock()
+recording_streamer = None
+recording_filename = None
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -156,25 +160,43 @@ def dashboard():
 @app.route('/video_feed')
 def video_feed():
     def generate():
-        while True:
-            frame = streamer.get_jpeg()
-            if frame:
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-            else:
-                time.sleep(0.1)
+        streamer = VideoStreamer()
+        try:
+            while True:
+                frame = streamer.get_jpeg()
+                if frame:
+                    yield (b'--frame\r\n'
+                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                else:
+                    time.sleep(0.1)
+        finally:
+            streamer.release()
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/start_recording', methods=['POST'])
 def start_recording():
-    filename = request.json.get('filename', 'output.avi')
-    streamer.start_recording(filename)
-    return jsonify({"message": "Recording started"})
+    global recording_streamer, recording_filename
+    with recording_lock:
+        if recording_streamer is not None:
+            return jsonify({"message": "Recording already in progress"}), 400
+        filename = request.json.get('filename', 'output.avi')
+        recording_streamer = VideoStreamer()
+        recording_streamer.start_recording(filename)
+        recording_filename = filename
+    return jsonify({"message": "Recording started", "filename": filename})
 
 @app.route('/stop_recording', methods=['POST'])
 def stop_recording():
-    streamer.stop_recording()
-    return jsonify({"message": "Recording stopped"})
+    global recording_streamer, recording_filename
+    with recording_lock:
+        if recording_streamer is None:
+            return jsonify({"message": "No recording in progress"}), 400
+        recording_streamer.stop_recording()
+        recording_streamer.release()
+        recording_streamer = None
+        filename = recording_filename
+        recording_filename = None
+    return jsonify({"message": "Recording stopped", "filename": filename})
 
 
 
