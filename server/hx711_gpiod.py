@@ -18,8 +18,8 @@ class HX711:
         # Open GPIO chip
         self.chip = gpiod.Chip(chip)
         # Request lines
-        self.dout_line = self.chip.get_line(self.dout_pin)
-        self.pd_sck_line = self.chip.get_line(self.pd_sck_pin)
+        self.dout_line = self.chip.get_line_info(self.dout_pin)
+        self.pd_sck_line = self.chip.get_line_info(self.pd_sck_pin)
         self.dout_line.request(consumer="hx711", type=gpiod.LINE_REQ_DIR_IN)
         self.pd_sck_line.request(consumer="hx711", type=gpiod.LINE_REQ_DIR_OUT)
 
