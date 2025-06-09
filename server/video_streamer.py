@@ -1,25 +1,34 @@
 import threading
 import time
 import numpy as np
-
 from picamera2 import Picamera2, Preview
 import cv2
 
+class CameraBusyException(Exception):
+    pass
+
 class VideoStreamer:
     def __init__(self):
-        self.picam2 = Picamera2()
-        # Configure camera
-        video_config = self.picam2.create_video_configuration(
-            main={"size": (640, 480), "format": "RGB888"}
-        )
-        self.picam2.configure(video_config)
-        self.picam2.start()
-        self.recording = False
-        self.writer = None
-        self.frame = None
-        self.lock = threading.Lock()
-        self.running = True
-        threading.Thread(target=self._update_frame, daemon=True).start()
+
+        try:
+            self.picam2 = Picamera2()
+            # Configure camera
+            video_config = self.picam2.create_video_configuration(
+                main={"size": (640, 480), "format": "RGB888"}
+            )
+            self.picam2.configure(video_config)
+            self.picam2.start()
+            self.recording = False
+            self.writer = None
+            self.frame = None
+            self.lock = threading.Lock()
+            self.running = True
+            threading.Thread(target=self._update_frame, daemon=True).start()
+        except RuntimeError as e:
+            if "Device or resource busy" in str(e) or "Pipeline handler in use by another process" in str(e):
+                raise CameraBusyException("Camera is currently in use.")
+            else:
+                raise
 
     def _update_frame(self):
         while self.running:
