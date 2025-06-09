@@ -3,7 +3,8 @@ import gpiod
 
 class HX711:
     """
-    HX711 ADC interface using python-gpiod 2.x API (tested with v2.3.0).
+    HX711 ADC interface using python-gpiod 2.x API (tested with v2.3.0+).
+    Uses request_lines for line requests as required in v2+.
     """
     def __init__(self, dout_pin, pd_sck_pin, chip='/dev/gpiochip0', gain=128):
         """
@@ -18,26 +19,35 @@ class HX711:
         self.offset = 0
         self.scale = 1
 
-        # Open the GPIO chip using python-gpiod 2.x API
-        self.chip = gpiod.Chip(chip)
+        # Prepare line settings
+        dout_settings = gpiod.LineSettings(direction=gpiod.LineDirection.INPUT)
+        pd_sck_settings = gpiod.LineSettings(direction=gpiod.LineDirection.OUTPUT)
 
-        # DOUT as input
-        self.dout_request = self.chip.request_lines(
-            consumer="hx711_dout",
-            lines=[self.dout_pin],
-            direction=gpiod.LineDirection.INPUT
+        # Request both lines with correct settings using config dict
+        config = {
+            self.dout_pin: dout_settings,
+            self.pd_sck_pin: pd_sck_settings,
+        }
+        # Set PD_SCK low initially
+        output_values = {self.pd_sck_pin: gpiod.LineValue.INACTIVE}
+
+        # Request lines from the chip (multi-line request)
+        self.lines = gpiod.Chip(chip).request_lines(
+            config=config,
+            consumer="hx711",
+            output_values=output_values,
         )
-        # PD_SCK as output, start low
-        self.pd_sck_request = self.chip.request_lines(
-            consumer="hx711_pd_sck",
-            lines=[self.pd_sck_pin],
-            direction=gpiod.LineDirection.OUTPUT,
-            default_vals=[0]
-        )
+        # Indexing: we need to know which index in the multiline request corresponds to which pin
+        # The order is the order of keys in config, which in Python 3.7+ is insertion order.
+        # We'll store the index for each pin.
+        self.line_indices = {pin: idx for idx, pin in enumerate(config.keys())}
+        # For convenience
+        self.dout_idx = self.line_indices[self.dout_pin]
+        self.pd_sck_idx = self.line_indices[self.pd_sck_pin]
 
         self.set_gain(gain)
         # Ensure clock is low
-        self.pd_sck_request.set_values([0])
+        self.set_pd_sck(0)
 
     def set_gain(self, gain):
         """
@@ -57,8 +67,17 @@ class HX711:
         """
         Check if HX711 is ready (DOUT goes LOW).
         """
-        # get_values returns a list of values for each line
-        return self.dout_request.get_values()[0] == 0
+        # get_values returns a list of values for each requested line
+        return self.lines.get_values()[self.dout_idx] == gpiod.LineValue.INACTIVE
+
+    def set_pd_sck(self, value):
+        """
+        Set PD_SCK line (0 or 1).
+        """
+        values = [None] * len(self.line_indices)
+        # Only set the PD_SCK index, leave others as None
+        values[self.pd_sck_idx] = gpiod.LineValue.ACTIVE if value else gpiod.LineValue.INACTIVE
+        self.lines.set_values(values)
 
     def _read_raw(self):
         """
@@ -73,19 +92,19 @@ class HX711:
 
         count = 0
         for _ in range(24):
-            self.pd_sck_request.set_values([1])
+            self.set_pd_sck(1)
             time.sleep(0.000001)
             count = count << 1
-            self.pd_sck_request.set_values([0])
+            self.set_pd_sck(0)
             time.sleep(0.000001)
-            if self.dout_request.get_values()[0]:
+            if self.lines.get_values()[self.dout_idx] == gpiod.LineValue.ACTIVE:
                 count += 1
 
         # Pulse clock to set gain/channel for next conversion
         for _ in range(self.gain_pulses):
-            self.pd_sck_request.set_values([1])
+            self.set_pd_sck(1)
             time.sleep(0.000001)
-            self.pd_sck_request.set_values([0])
+            self.set_pd_sck(0)
             time.sleep(0.000001)
 
         # Convert from 24 bit signed (two's complement)
@@ -123,13 +142,13 @@ class HX711:
         """
         Power down the HX711.
         """
-        self.pd_sck_request.set_values([0])
-        self.pd_sck_request.set_values([1])
+        self.set_pd_sck(0)
+        self.set_pd_sck(1)
         time.sleep(0.0001)
 
     def power_up(self):
         """
         Power up the HX711.
         """
-        self.pd_sck_request.set_values([0])
+        self.set_pd_sck(0)
         time.sleep(0.0001)
