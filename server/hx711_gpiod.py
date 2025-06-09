@@ -20,10 +20,10 @@ class HX711:
         self.scale = 1
 
         # Prepare line settings, using gpiod.line.LineSettings and gpiod.line.Direction
-        dout_settings = gpiod.line.LineSettings()
+        dout_settings = gpiod.LineSettings()
         dout_settings.direction = gpiod.line.Direction.INPUT
 
-        pd_sck_settings = gpiod.line.LineSettings()
+        pd_sck_settings = gpiod.LineSettings()
         pd_sck_settings.direction = gpiod.line.Direction.OUTPUT
 
         # Request both lines with correct settings using config dict
