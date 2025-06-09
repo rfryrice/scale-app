@@ -1,22 +1,31 @@
 import csv
 import time
 import datetime
-from hx711_gpiod import HX711
+
+# Remove direct instantiation of HX711 here.
+# The hx object will be passed in or set externally.
 
 DOUT_PIN = 21
 PD_SCK_PIN = 20
 GPIO_CHIP = '/dev/gpiochip0'
-hx = HX711(dout_pin=DOUT_PIN, pd_sck_pin=PD_SCK_PIN, chip=GPIO_CHIP)
+# hx = HX711(dout_pin=DOUT_PIN, pd_sck_pin=PD_SCK_PIN, chip=GPIO_CHIP)  # <-- Remove this line
+
+# Instead, declare hx as None to be assigned in main.py
+hx = None
 
 # Calibration state shared for frontend API
 calibration_state = {
     "in_progress": False,
-    "step": None,         # None, "tare", "place_weight", "enter_weight", "done"
+    "step": None,
     "message": "",
     "reading": None,
     "ratio": None,
     "known_weight": None
 }
+
+def set_hx(new_hx):
+    global hx
+    hx = new_hx
 
 def calibrate_start():
     """Start the calibration process (tare the scale)."""

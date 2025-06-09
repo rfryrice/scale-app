@@ -4,8 +4,9 @@ from models import Contact, User
 from video_streamer import VideoStreamer, CameraBusyException
 from sensor import (
     calibrate_start, calibrate_weight_read, calibrate_set_known_weight,
-    calibrate_status, read_sensor_loop, hx
+    calibrate_status, read_sensor_loop, set_hx
 )
+from hx711_gpiod import HX711
 import csv
 import os
 import time
@@ -21,6 +22,13 @@ recording_filename = None
 # -- Sensor thread --
 sensor_thread = None
 sensor_thread_running = False
+
+# --- Instantiate HX711 and inject into sensor module ---
+DOUT_PIN = 21
+PD_SCK_PIN = 20
+GPIO_CHIP = '/dev/gpiochip0'
+hx = HX711(dout_pin=DOUT_PIN, pd_sck_pin=PD_SCK_PIN, chip=GPIO_CHIP)
+set_hx(hx)  # Make hx available in sensor module
 
 @app.route("/register", methods=["POST"])
 def register():

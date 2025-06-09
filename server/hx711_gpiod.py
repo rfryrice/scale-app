@@ -77,7 +77,10 @@ class HX711:
         """
         Set PD_SCK line (0 or 1).
         """
-        self.lines.set_value(1,gpiod.line.Value.ACTIVE if value else gpiod.line.Value.INACTIVE)
+        self.lines.set_value(
+            1,
+            gpiod.line.Value.ACTIVE if value else gpiod.line.Value.INACTIVE
+        )
 
     def _read_raw(self):
         """
