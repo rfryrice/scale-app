@@ -2,7 +2,10 @@ from flask import request, jsonify, Response
 from config import app, db
 from models import Contact, User
 from video_streamer import VideoStreamer, CameraBusyException
-from sensor import calibrate, read_sensor_loop, hx
+from sensor import (
+    calibrate_start, calibrate_weight_read, calibrate_set_known_weight,
+    calibrate_status, read_sensor_loop, hx
+)
 import csv
 import os
 import time
@@ -134,7 +137,6 @@ def dashboard():
 
     csv_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.csv')]
 
-
     # Get filename from query parameter, default to first csv file if not present
     filename = request.args.get('file')
     if not filename or filename not in csv_files:
@@ -155,21 +157,34 @@ def dashboard():
                 })
     return jsonify({"data": data, "csv_files": csv_files})
 
+# Sensor Calibration API (multi-step for frontend)
+@app.route('/sensor/calibrate/start', methods=['POST'])
+def api_calibrate_start():
+    if calibrate_start():
+        return jsonify({"message": calibrate_status()["message"], "step": calibrate_status()["step"]}), 200
+    else:
+        return jsonify({"message": calibrate_status()["message"], "step": calibrate_status()["step"]}), 400
 
+@app.route('/sensor/calibrate/read_weight', methods=['POST'])
+def api_calibrate_weight_read():
+    if calibrate_weight_read():
+        return jsonify({"message": calibrate_status()["message"], "step": calibrate_status()["step"]}), 200
+    else:
+        return jsonify({"message": calibrate_status()["message"], "step": calibrate_status()["step"]}), 400
 
-# ROUTES TO MAKE:
-# /data
-# /line
+@app.route('/sensor/calibrate/set_known_weight', methods=['POST'])
+def api_calibrate_set_known_weight():
+    weight = request.json.get("weight")
+    if calibrate_set_known_weight(weight):
+        return jsonify({"message": calibrate_status()["message"], "step": calibrate_status()["step"]}), 200
+    else:
+        return jsonify({"message": calibrate_status()["message"], "step": calibrate_status()["step"]}), 400
 
-# Sensor Routes
-@app.route('/sensor/calibrate', methods=['POST'])
-def calibrate_route():
-    try:
-        calibrate(hx)
-        return jsonify({"message": "Calibration successful."}), 200
-    except Exception as e:
-        return jsonify({"message": f"Calibration failed: {str(e)}"}), 500
+@app.route('/sensor/calibrate/status', methods=['GET'])
+def api_calibrate_status():
+    return jsonify(calibrate_status()), 200
 
+# Sensor thread control
 @app.route('/sensor/start', methods=['POST'])
 def start_sensor_loop():
     global sensor_thread, sensor_thread_running
@@ -183,7 +198,6 @@ def start_sensor_loop():
 @app.route('/sensor/status', methods=['GET'])
 def sensor_status():
     return jsonify({"running": sensor_thread_running}), 200
-
 
 # Stream Routes
 @app.route('/video_feed')
@@ -234,9 +248,6 @@ def stop_recording():
         recording_filename = None
     return jsonify({"message": "Recording stopped", "filename": filename})
 
-
-
-
 @app.route("/api/users", methods=["GET"])
 def users():
     return jsonify(
@@ -252,5 +263,7 @@ def users():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-
+    # Optionally start the thread automatically, or require /sensor/start API call
+    # sensor_thread = threading.Thread(target=read_sensor_loop, daemon=True)
+    # sensor_thread.start()
     app.run(debug=True, port=8080)

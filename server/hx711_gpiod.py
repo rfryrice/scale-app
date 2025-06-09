@@ -22,12 +22,12 @@ class HX711:
         self.chip = gpiod.Chip(chip)
 
         # Request DOUT as input, PD_SCK as output
-        self.dout_line = self.chip.request_line(
+        self.dout_line = self.chip.request_lines(
             self.dout_pin,
             consumer="hx711_dout",
             direction=gpiod.Line.REQUEST_DIRECTION_INPUT
         )
-        self.pd_sck_line = self.chip.request_line(
+        self.pd_sck_line = self.chip.request_lines(
             self.pd_sck_pin,
             consumer="hx711_pd_sck",
             direction=gpiod.Line.REQUEST_DIRECTION_OUTPUT,

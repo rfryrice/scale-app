@@ -1,7 +1,6 @@
 import csv
 import time
 import datetime
-import threading
 from hx711_gpiod import HX711
 
 DOUT_PIN = 21
@@ -88,15 +87,10 @@ def write_mass_to_csv(mass, timestamp, filename):
         writer.writerow([timestamp, mass])
 
 def read_sensor_loop():
-    # Optionally start reading only after calibration
+    """Continuously read sensor and write to CSV. Call this in a thread from main.py."""
     while True:
         value = read_mass()
         timestamp = datetime.datetime.now().isoformat()
         filename = f"{datetime.date.today()}.csv"
         write_mass_to_csv(value, timestamp, filename)
         time.sleep(0.1)  # 10Hz
-
-if __name__ == '__main__':
-    thread = threading.Thread(target=read_sensor_loop)
-    thread.daemon = True
-    thread.start()
