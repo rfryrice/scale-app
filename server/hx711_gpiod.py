@@ -18,7 +18,7 @@ class HX711:
         self.gain = gain
         self.offset = 0
         self.scale = 1
-        self.chip = chip
+        self.chip = gpiod.Chip(chip)
 
         # Prepare line settings, using gpiod.line.LineSettings and gpiod.line.Direction
         dout_settings = gpiod.LineSettings()
