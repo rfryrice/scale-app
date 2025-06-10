@@ -1,16 +1,22 @@
 import gpiod
 
-chip = gpiod.Chip('gpiochip0')  # Use 'gpiochip0' or '/dev/gpiochip0' as appropriate
+chip_path = "/dev/gpiochip0"
+chip = gpiod.Chip(chip_path)
 
-print("GPIO Line Info for chip:", chip.path if hasattr(chip, 'path') else chip.name)
+info = chip.get_info()
+print(f"Chip path: {chip.path}")
+print(f"Label: {getattr(info, 'label', 'N/A')}")
+print(f"Name: {getattr(info, 'name', 'N/A')}")
+print(f"Number of lines: {info.num_lines}")
+print()
+print(f"{'Offset':>6}  {'Name':<16}  {'Direction':<8}  {'Active-low':<10}  {'Used by'}")
 
-for offset in range(chip.num_lines):
-    line = chip.get_line(offset)
-    info = line.line_info
-    # Defensive: some versions have .name, some do not
-    line_name = getattr(info, 'name', '')
-    consumer = getattr(info, 'consumer', '')
-    direction = "output" if info.direction == gpiod.LineDirection.OUTPUT else "input"
-    print(f"Offset: {offset:>3}  Name: {line_name:<16}  Direction: {direction:<6}  Used by: {consumer}")
+for offset in range(info.num_lines):
+    line_info = chip.get_line_info(offset)
+    line_name = getattr(line_info, "name", "")
+    consumer = getattr(line_info, "consumer", "")
+    direction = "output" if line_info.direction == gpiod.line.Direction.OUTPUT else "input"
+    active_low = str(getattr(line_info, "active_low", False))
+    print(f"{offset:>6}  {line_name:<16}  {direction:<8}  {active_low:<10}  {consumer}")
 
 chip.close()
