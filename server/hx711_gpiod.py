@@ -341,6 +341,28 @@ class HX711:
         self._save_last_raw_data(backup_channel, backup_gain, data_mean)
         return int(data_mean)
     
+    def get_data_mean(self, readings=30):
+        """
+        get_data_mean returns average value of readings minus
+        offset for the channel which was read.
+
+        Args:
+            readings(int): Number of readings for mean
+
+        Returns: (bool || int) False if reading was not ok.
+            If it returns int then reading was ok
+        """
+        result = self.get_raw_data_mean(readings)
+        if result != False:
+            if self._current_channel == 'A' and self._gain_channel_A == 128:
+                return result - self._offset_A_128
+            elif self._current_channel == 'A' and self._gain_channel_A == 64:
+                return result - self._offset_A_64
+            else:
+                return result - self._offset_B
+        else:
+            return False
+    
     def get_weight_mean(self, readings=30):
         """
         get_weight_mean returns average value of readings minus
