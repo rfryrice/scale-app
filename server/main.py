@@ -277,4 +277,4 @@ if __name__ == "__main__":
     # Optionally start the thread automatically, or require /sensor/start API call
     # sensor_thread = threading.Thread(target=read_sensor_loop, daemon=True)
     # sensor_thread.start()
-    app.run(debug=True, port=8080)
+    app.run(debug=True, port=8080, use_reloader=False)
