@@ -11,6 +11,9 @@ import csv
 import os
 import time
 import threading
+from thread_report import report_gpiochip0_users
+
+report_gpiochip0_users()
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
