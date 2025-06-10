@@ -429,7 +429,7 @@ class HX711:
     def tare(self, readings=30):
         """
         zero is a method which sets the current data as
-        an offset for particulart channel. It can be used for
+        an offset for particular channel. It can be used for
         subtracting the weight of the packaging. Also known as tare.
 
         Args:
@@ -446,13 +446,16 @@ class HX711:
                 if (self._current_channel == 'A' and
                         self._gain_channel_A == 128):
                     self._offset_A_128 = result
+                    self.offset = self._offset_A_128
                     return False
                 elif (self._current_channel == 'A' and
                       self._gain_channel_A == 64):
                     self._offset_A_64 = result
+                    self.offset = self._offset_A_64
                     return False
                 elif (self._current_channel == 'B'):
                     self._offset_B = result
+                    self.offset = self._offset_B
                     return False
                 else:
                     if self._debug_mode:
