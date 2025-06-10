@@ -6,7 +6,7 @@ class HX711:
     HX711 ADC interface using python-gpiod 2.x API (tested with v2.3.0+).
     Uses request_lines for line requests as required in v2+.
     """
-    def __init__(self, dout_pin, pd_sck_pin, chip='/dev/gpiochip0', gain=128):
+    def __init__(self, dout_pin, pd_sck_pin, chip='gpiochip0', gain=128):
         """
         dout_pin: BCM GPIO number for DOUT (data output of HX711)
         pd_sck_pin: BCM GPIO number for PD_SCK (clock pin of HX711)
