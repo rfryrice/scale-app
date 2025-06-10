@@ -88,7 +88,7 @@ def calibrate_status():
     return calibration_state.copy()
 
 def read_mass():
-    return hx.get_weight_mean(times=5)  # Average over 5 readings
+    return hx.get_weight_mean(readings=5)  # Average over 5 readings
 
 def write_mass_to_csv(mass, timestamp, filename):
     with open(filename, 'a', newline='') as f:
