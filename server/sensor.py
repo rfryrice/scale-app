@@ -33,8 +33,8 @@ def calibrate_start():
     calibration_state["step"] = "tare"
     calibration_state["message"] = "Remove all items from the scale. Taring..."
     try:
-        hx.tare(times=15)
-        calibration_state["reading"] = hx.read_average(times=10)
+        hx.tare()
+        calibration_state["reading"] = hx.get_raw_data_mean()
         calibration_state["message"] = "Tare complete. Place a known weight on the scale."
         calibration_state["step"] = "place_weight"
         return True
@@ -50,7 +50,7 @@ def calibrate_weight_read():
         calibration_state["message"] = "Calibration step error: not ready to read weight."
         calibration_state["step"] = "error"
         return False
-    reading = hx.read_average(times=10)
+    reading = hx.get_data_mean()
     if reading is not None:
         calibration_state["reading"] = reading
         calibration_state["message"] = "Enter the known weight value (grams) in the frontend."
@@ -88,7 +88,7 @@ def calibrate_status():
     return calibration_state.copy()
 
 def read_mass():
-    return hx.get_units(times=5)  # Average over 5 readings
+    return hx.get_weight_mean(times=5)  # Average over 5 readings
 
 def write_mass_to_csv(mass, timestamp, filename):
     with open(filename, 'a', newline='') as f:

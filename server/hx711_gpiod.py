@@ -340,6 +340,31 @@ class HX711:
             data_mean = stat.mean(data_list)
         self._save_last_raw_data(backup_channel, backup_gain, data_mean)
         return int(data_mean)
+    
+    def get_weight_mean(self, readings=30):
+        """
+        get_weight_mean returns average value of readings minus
+        offset divided by scale ratio for a specific channel
+        and gain.
+
+        Args:
+            readings(int): Number of readings for mean
+
+        Returns: (bool || float) False if reading was not ok.
+            If it returns float then reading was ok
+        """
+        result = self.get_raw_data_mean(readings)
+        if result != False:
+            if self._current_channel == 'A' and self._gain_channel_A == 128:
+                return float(
+                    (result - self._offset_A_128) / self._scale_ratio_A_128)
+            elif self._current_channel == 'A' and self._gain_channel_A == 64:
+                return float(
+                    (result - self._offset_A_64) / self._scale_ratio_A_64)
+            else:
+                return float((result - self._offset_B) / self._scale_ratio_B)
+        else:
+            return False
 
     def outliers_filter(self, data_list, stdev_thresh = 1.0):
         """
@@ -379,12 +404,50 @@ class HX711:
         """
         return sum(self._read_raw() for _ in range(times)) / times
 
-    def tare(self, times=15):
+    def tare(self, readings=30):
         """
-        Zero the scale (set offset).
+        zero is a method which sets the current data as
+        an offset for particulart channel. It can be used for
+        subtracting the weight of the packaging. Also known as tare.
+
+        Args:
+            readings(int): Number of readings for mean. Allowed values 1..99
+
+        Raises:
+            ValueError: if readings are not in range 1..99
+
+        Returns: True if error occured.
         """
-        self.offset = self.read_average(times)
-        return self.offset
+        if readings > 0 and readings < 100:
+            result = self.get_raw_data_mean(readings)
+            if result != False:
+                if (self._current_channel == 'A' and
+                        self._gain_channel_A == 128):
+                    self._offset_A_128 = result
+                    return False
+                elif (self._current_channel == 'A' and
+                      self._gain_channel_A == 64):
+                    self._offset_A_64 = result
+                    return False
+                elif (self._current_channel == 'B'):
+                    self._offset_B = result
+                    return False
+                else:
+                    if self._debug_mode:
+                        print('Cannot zero() channel and gain mismatch.\n'
+                              'current channel: {}\n'
+                              'gain A: {}\n'.format(self._current_channel,
+                                                    self._gain_channel_A))
+                    return True
+            else:
+                if self._debug_mode:
+                    print('From method "zero()".\n'
+                          'get_raw_data_mean(readings) returned False.\n')
+                return True
+        else:
+            raise ValueError('Parameter "readings" '
+                             'can be in range 1 up to 99. '
+                             'Received: {}'.format(readings))
 
     def set_scale(self, scale):
         """
