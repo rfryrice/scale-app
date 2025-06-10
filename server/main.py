@@ -26,7 +26,7 @@ sensor_thread_running = False
 # --- Instantiate HX711 and inject into sensor module ---
 DOUT_PIN = 21
 PD_SCK_PIN = 20
-GPIO_CHIP = '/dev/gpiochip0'
+GPIO_CHIP = 'gpiochip0'
 hx = HX711(dout_pin=DOUT_PIN, pd_sck_pin=PD_SCK_PIN, chip=GPIO_CHIP)
 set_hx(hx)  # Make hx available in sensor module
 

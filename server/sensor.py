@@ -7,7 +7,7 @@ import datetime
 
 DOUT_PIN = 21
 PD_SCK_PIN = 20
-GPIO_CHIP = '/dev/gpiochip0'
+GPIO_CHIP = 'gpiochip0'
 # hx = HX711(dout_pin=DOUT_PIN, pd_sck_pin=PD_SCK_PIN, chip=GPIO_CHIP)  # <-- Remove this line
 
 # Instead, declare hx as None to be assigned in main.py
