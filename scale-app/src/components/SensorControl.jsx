@@ -4,13 +4,15 @@ import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function SensorControl() {
   const [status, setStatus] = useState(false);
   const [msg, setMsg] = useState("");
 
   const fetchStatus = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/sensor/status");
+      const res = await axios.get(`${API_URL}/sensor/status`);
       setStatus(res.data.running);
     } catch (err) {
       setMsg("Failed to get sensor status.");
@@ -27,7 +29,7 @@ function SensorControl() {
   const handleCalibrate = async () => {
     setMsg("Calibrating...");
     try {
-      const res = await axios.post("http://localhost:8080/sensor/calibrate");
+      const res = await axios.post(`${API_URL}/sensor/calibrate`);
       setMsg(res.data.message);
     } catch (err) {
       setMsg(err.response?.data?.message || "Calibration failed.");
@@ -37,7 +39,7 @@ function SensorControl() {
   const handleStart = async () => {
     setMsg("Starting sensor loop...");
     try {
-      const res = await axios.post("http://localhost:8080/sensor/start");
+      const res = await axios.post(`${API_URL}/sensor/start`);
       setMsg(res.data.message);
       fetchStatus();
     } catch (err) {

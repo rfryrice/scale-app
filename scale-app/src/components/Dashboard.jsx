@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { LineChart } from '@mui/x-charts/LineChart';
 
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Helper to parse ISO string with 'Z' (UTC) to Date object
 function parseTimestamp(ts) {
@@ -34,7 +35,7 @@ function Dashboard({ selectedFile }) {
     if (!selectedFile) return;
     setFilename(selectedFile);
     axios
-      .get(`http://localhost:8080/dashboard?file=${encodeURIComponent(selectedFile)}`)
+      .get(`${API_URL}/dashboard?file=${encodeURIComponent(selectedFile)}`)
       .then(res => setData(res.data.data))
       .catch(err => setData([]));
   }, [selectedFile]);

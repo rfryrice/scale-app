@@ -7,13 +7,15 @@ import ListItemButton from "@mui/material/ListItemButton"
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function ListData({ onFileSelect, selectedFile }) {
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
     axios
-      .get("http://localhost:8080/list-csv")
+      .get(`${API_URL}/list-csv`)
       .then((res) => setFiles(res.data.files))
       .catch((err) => setError(err.message));
   }, []);

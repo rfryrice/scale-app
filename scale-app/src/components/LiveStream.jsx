@@ -4,7 +4,9 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import axios from "axios";
 
-const STREAM_URL = "http://localhost:8080/video_feed";
+const API_URL = import.meta.env.VITE_API_URL;
+
+const STREAM_URL = `${API_URL}/video_feed`;
 
 function LiveStream() {
   const [recording, setRecording] = useState(false);
@@ -14,7 +16,7 @@ function LiveStream() {
 
   const handleStart = async () => {
     try {
-      await axios.post("http://localhost:8080/start_recording", {
+      await axios.post(`${API_URL}/start_recording`, {
         filename: "recorded_" + Date.now() + ".avi"
       });
       setRecording(true);
@@ -26,7 +28,7 @@ function LiveStream() {
 
   const handleStop = async () => {
     try {
-      await axios.post("http://localhost:8080/stop_recording");
+      await axios.post(`${API_URL}/stop_recording`);
       setRecording(false);
       setMsg("Recording stopped.");
     } catch (e) {

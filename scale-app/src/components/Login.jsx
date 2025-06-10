@@ -4,6 +4,8 @@ import Link from '@mui/material/Link';
 import axios from 'axios'
 import "./LoginForm.css";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const LoginForm = ( {onLogin, switchToRegister }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -13,7 +15,7 @@ const LoginForm = ( {onLogin, switchToRegister }) => {
     e.preventDefault();
     setError('');
     try {
-      const res = await axios.post('http://localhost:8080/login', {
+      const res = await axios.post(`${API_URL}/login`, {
         username,
         password,
       });
