@@ -478,7 +478,12 @@ class HX711:
         """
         Set scale value (calibration ratio).
         """
-        self.scale = scale
+        if self.gain == 128:
+            self._scale_ratio_A_128 = scale
+            self.scale = self._scale_ratio_A_128
+        elif self.gain == 64:
+            self._scale_ratio_A_128 = scale
+            self.scale = self._scale_ratio_A_128
 
     def get_units(self, times=5):
         """
