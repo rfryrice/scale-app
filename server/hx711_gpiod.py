@@ -263,7 +263,7 @@ class HX711:
                 return False
             # Shift the bits as they come to data_in variable.
             # Left shift by one bit then bitwise OR with the new bit.
-            data_in = (data_in << 1) | self.lines.get_value(self._dout)
+            data_in = (data_in << 1) | int(self.lines.get_value(self._dout))
 
         if self._wanted_channel == 'A' and self._gain_channel_A == 128:
             if not self._set_channel_gain(1):  # send only one bit which is 1
