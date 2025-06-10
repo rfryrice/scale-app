@@ -25,7 +25,7 @@ import time
 import datetime
 import csv
 from hx711_gpiod import HX711
-from sensor_debug import set_hx, calibrate_start, calibrate_weight_read, calibrate_set_known_weight, read_mass
+from server import set_hx, calibrate_start, calibrate_weight_read, calibrate_set_known_weight, read_mass
 
 # --- CONFIGURE YOUR PINS/CHIP HERE ---
 DOUT_PIN = 21        # BCM GPIO number for HX711 DOUT
