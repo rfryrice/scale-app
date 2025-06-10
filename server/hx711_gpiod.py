@@ -341,6 +341,38 @@ class HX711:
         self._save_last_raw_data(backup_channel, backup_gain, data_mean)
         return int(data_mean)
 
+    def outliers_filter(self, data_list, stdev_thresh = 1.0):
+        """
+        It filters out outliers from the provided list of int.
+        Median is used as an estimator of outliers.
+        Outliers are compared to the standard deviation from the median
+        Default filter is of 1.0 standard deviation from the median
+
+        Args:
+            data_list([int]): List of int. It can contain Bool False that is removed.
+        
+        Returns: list of filtered data. Excluding outliers.
+        """
+        # filter out -1 which indicates no signal
+        # filter out booleans
+        data = [num for num in data_list if (num != -1 and num != False and num != True)] 
+        if not data:
+            return []
+
+        median = stat.median(data)
+        dists_from_median = [(abs(measurement - median)) for measurement in data]
+        stdev = stat.stdev(dists_from_median)
+        if stdev:
+            ratios_to_stdev = [(dist / stdev) for dist in dists_from_median]
+        else:
+            # stdev is 0. Therefore return just the median
+            return [median]
+        filtered_data = []
+        for i in range(len(data)):
+            if ratios_to_stdev[i] < stdev_thresh:
+                filtered_data.append(data[i])
+        return filtered_data
+
     def read_average(self, times=5):
         """
         Read multiple times and average.
