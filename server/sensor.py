@@ -50,7 +50,7 @@ def calibrate_weight_read():
         calibration_state["message"] = "Calibration step error: not ready to read weight."
         calibration_state["step"] = "error"
         return False
-    reading = hx.get_raw_data_mean()
+    reading = hx.get_data_mean()
     if reading is not None:
         calibration_state["reading"] = reading
         calibration_state["message"] = "Enter the known weight value (grams) in the frontend."
