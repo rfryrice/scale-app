@@ -18,6 +18,7 @@ class HX711:
         self.gain = gain
         self.offset = 0
         self.scale = 1
+        self.chip = chip
 
         # Prepare line settings, using gpiod.line.LineSettings and gpiod.line.Direction
         dout_settings = gpiod.LineSettings()
@@ -34,8 +35,9 @@ class HX711:
         # Set PD_SCK low initially
         output_values = {self.pd_sck_pin: gpiod.line.Value.INACTIVE}
 
+
         # Request lines from the chip (multi-line request)
-        self.lines = gpiod.Chip(chip).request_lines(
+        self.lines = self.chip.request_lines(
             config=config,
             consumer="hx711",
             output_values=output_values,
