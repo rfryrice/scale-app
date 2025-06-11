@@ -29,7 +29,7 @@ function SensorControl() {
   const handleCalibrate = async () => {
     setMsg("Calibrating...");
     try {
-      const res = await axios.post(`${API_URL}/sensor/calibrate`);
+      const res = await axios.post(`${API_URL}/sensor/calibrate/start`);
       setMsg(res.data.message);
     } catch (err) {
       setMsg(err.response?.data?.message || "Calibration failed.");
