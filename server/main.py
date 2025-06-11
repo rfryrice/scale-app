@@ -23,7 +23,6 @@ video_streamer_instance = None
 
 # -- Sensor thread --
 sensor_thread = None
-sensor_thread_running = False
 
 # --- Instantiate HX711 and inject into sensor module ---
 DOUT_PIN = 21
