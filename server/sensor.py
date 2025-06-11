@@ -2,6 +2,7 @@ import csv
 import time
 import datetime
 import os
+import threading
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 CALIBRATION_FILE = os.path.join(DATA_DIR, "calibration_ratio.txt")
@@ -12,7 +13,7 @@ PD_SCK_PIN = 20
 GPIO_CHIP = 'gpiochip0'
 hx = None
 
-sensor_thread_running = None
+sensor_thread_event = threading.Event()
 
 calibration_state = {
     "in_progress": False,
@@ -159,11 +160,10 @@ def write_mass_to_csv(mass, timestamp, filename):
         writer.writerow([timestamp, mass])
 
 def read_sensor_loop():
-    global sensor_thread_running
     print("[DEBUG] read_sensor_loop: Thread started.")
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
-    while sensor_thread_running:
+    while sensor_thread_event.is_set():
         print("[DEBUG] read_sensor_loop: Loop is active.")
         value = read_mass()
         timestamp = datetime.datetime.now().isoformat()

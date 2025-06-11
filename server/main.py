@@ -4,9 +4,9 @@ from models import Contact, User
 from video_streamer import VideoStreamer, CameraBusyException
 from sensor import (
     calibrate_start, calibrate_weight_read, calibrate_set_known_weight,
-    calibrate_status, read_sensor_loop, set_hx, sensor_thread_running,
-    load_calibration_ratio
+    calibrate_status, read_sensor_loop, set_hx, load_calibration_ratio
 )
+import sensor
 from hx711_gpiod import HX711
 import csv
 import os
@@ -204,30 +204,29 @@ def api_calibrate_status():
 # Sensor recoding thread control
 @app.route('/sensor/start', methods=['POST'])
 def start_sensor_loop():
-    global sensor_thread, sensor_thread_running
-    if sensor_thread_running:
-        print("[DEBUG] /sensor/start: Sensor reading loop already running.")
+    global sensor_thread
+    if sensor.sensor_thread_event.is_set():
         return jsonify({"message": "Sensor reading loop already running."}), 400
     print("[DEBUG] /sensor/start: Creating and starting sensor thread...")
-    sensor_thread = threading.Thread(target=read_sensor_loop, daemon=True)
-    sensor_thread_running = True
+    sensor.sensor_thread_running = True
+    sensor_thread = threading.Thread(target=sensor.read_sensor_loop, daemon=True)
     sensor_thread.start()
     return jsonify({"message": "Sensor reading loop started."}), 200
 
 @app.route('/sensor/stop', methods=['POST'])
 def stop_sensor_loop():
-    global sensor_thread, sensor_thread_running
-    if not sensor_thread_running:
+    global sensor_thread
+    if not sensor.sensor_thread_event.is_set():
         return jsonify({"message": "Sensor is not running."}), 400
     # Set a flag to stop the loop (implement this in your read_sensor_loop)
-    sensor_thread_running = False
+    sensor.sensor_thread_event.clear()
     sensor_thread = None
     filename = f"{time.strftime('%Y-%m-%d')}.csv"
     return jsonify({"message": "Sensor reading loop stopped.", "filename": filename}), 200
 
 @app.route('/sensor/status', methods=['GET'])
 def sensor_status():
-    return jsonify({"running": sensor_thread_running}), 200
+    return jsonify({"running": True}), 200
 
 # Stream Routes
 @app.route('/video_feed')
