@@ -171,7 +171,6 @@ def dashboard():
 @app.route('/sensor/calibrate/start', methods=['POST'])
 def api_calibrate_start():
     if calibrate_start():
-        
         return jsonify({"message": calibrate_status()["message"], "step": calibrate_status()["step"]}), 200
     else:
         return jsonify({"message": calibrate_status()["message"], "step": calibrate_status()["step"]}), 400

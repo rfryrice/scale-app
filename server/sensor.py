@@ -36,7 +36,7 @@ def calibrate_start():
             "scale": getattr(hx, 'scale', None),
         }
         print(f"[DEBUG] Tare complete. tare_raw={tare_raw}, offset={hx.offset}, scale={hx.scale}")
-        calibration_state["message"] = "Tare complete. Place a known weight on the scale."
+        calibration_state["message"] = "Tare complete. Place a known weight on the scale and press Continue."
         calibration_state["step"] = "place_weight"
         return True
     except Exception as e:

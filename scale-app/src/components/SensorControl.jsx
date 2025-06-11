@@ -1,79 +1,110 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
-import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 function SensorControl() {
-  const [status, setStatus] = useState(false);
-  const [msg, setMsg] = useState("");
+  const [status, setStatus] = useState(null); // { step, message }
+  const [loading, setLoading] = useState(false);
+  const [knownWeight, setKnownWeight] = useState("");
 
-  const fetchStatus = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/sensor/status`);
-      setStatus(res.data.running);
-    } catch (err) {
-      setMsg("Failed to get sensor status.");
-    }
-  };
-
-  useEffect(() => {
-    fetchStatus();
-    // Optionally, poll status every few seconds:
-    // const interval = setInterval(fetchStatus, 5000);
-    // return () => clearInterval(interval);
-  }, []);
-
-  const handleCalibrate = async () => {
-    setMsg("Calibrating...");
+  // Start calibration
+  const startCalibrate = async () => {
+    setLoading(true);
+    setStatus(null);
+    setKnownWeight("");
     try {
       const res = await axios.post(`${API_URL}/sensor/calibrate/start`);
-      setMsg(res.data.message);
+      setStatus(res.data);
     } catch (err) {
-      setMsg(err.response?.data?.message || "Calibration failed.");
+      setStatus({ step: "error", message: err?.response?.data?.message || "Error starting calibration" });
     }
+    setLoading(false);
   };
 
-  const handleStart = async () => {
-    setMsg("Starting sensor loop...");
+  // Read weight after placing known object
+  const readWeight = async () => {
+    setLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/sensor/start`);
-      setMsg(res.data.message);
-      fetchStatus();
+      const res = await axios.post(`${API_URL}/sensor/calibrate/read_weight`);
+      setStatus(res.data);
     } catch (err) {
-      setMsg(err.response?.data?.message || "Failed to start sensor loop.");
+      setStatus({ step: "error", message: err?.response?.data?.message || "Error reading weight" });
     }
+    setLoading(false);
   };
 
+  // Set known weight value
+  const submitKnownWeight = async () => {
+    if (!knownWeight || isNaN(Number(knownWeight))) {
+      setStatus(s => ({ ...s, message: "Please enter a valid number for known weight." }));
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API_URL}/sensor/calibrate/set_known_weight`, { weight: knownWeight });
+      setStatus(res.data);
+    } catch (err) {
+      setStatus({ step: "error", message: err?.response?.data?.message || "Error setting known weight" });
+    }
+    setLoading(false);
+  };
+
+  // Render calibration flow UI
   return (
-    <Paper elevation={3} sx={{ p: 2, maxWidth: 400, margin: "2rem auto" }}>
-      <Typography variant="h6" gutterBottom>
-        Sensor Control
-      </Typography>
-      <Typography>Status: {status ? "Running" : "Stopped"}</Typography>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleCalibrate}
-        sx={{ m: 1 }}
-      >
-        Calibrate
-      </Button>
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={handleStart}
-        sx={{ m: 1 }}
-        disabled={status}
-      >
-        Start Reading Loop
-      </Button>
-      <Typography variant="body2" color="primary" sx={{ mt: 2 }}>
-        {msg}
-      </Typography>
-    </Paper>
+    <div style={{ minWidth: 300 }}>
+      <h2>Sensor Control</h2>
+      {status && status.message && (
+        <Alert severity={status.step === "error" ? "error" : (status.step === "done" ? "success" : "info")}>
+          {status.message}
+        </Alert>
+      )}
+      {loading && <CircularProgress size={32} />}
+      {/* Calibration Steps */}
+      {!status && (
+        <Button variant="contained" color="primary" onClick={startCalibrate} disabled={loading}>
+          Calibrate
+        </Button>
+      )}
+      {status?.step === "place_weight" && (
+        <Button variant="contained" color="secondary" onClick={readWeight} disabled={loading}>
+          Read Weight
+        </Button>
+      )}
+      {status?.step === "enter_weight" && (
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            submitKnownWeight();
+          }}
+          style={{ marginTop: 12 }}
+        >
+          <TextField
+            label="Known Weight (grams)"
+            type="number"
+            value={knownWeight}
+            onChange={e => setKnownWeight(e.target.value)}
+            size="small"
+            style={{ marginRight: 8 }}
+            disabled={loading}
+            inputProps={{ min: "0", step: "any" }}
+            required
+          />
+          <Button variant="contained" color="success" type="submit" disabled={loading}>
+            Set Known Weight
+          </Button>
+        </form>
+      )}
+      {(status?.step === "done" || status?.step === "error") && (
+        <Button variant="outlined" onClick={startCalibrate} style={{ marginTop: 12 }}>
+          Restart Calibration
+        </Button>
+      )}
+    </div>
   );
 }
 
