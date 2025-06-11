@@ -14,6 +14,7 @@ GPIO_CHIP = 'gpiochip0'
 hx = None
 
 sensor_thread_event = threading.Event()
+sensor_thread_running = False  # <-- For status reporting
 
 calibration_state = {
     "in_progress": False,
@@ -160,14 +161,19 @@ def write_mass_to_csv(mass, timestamp, filename):
         writer.writerow([timestamp, mass])
 
 def read_sensor_loop():
+    global sensor_thread_running
     print("[DEBUG] read_sensor_loop: Thread started.")
+    sensor_thread_running = True  # <-- Set when thread starts
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
-    while sensor_thread_event.is_set():
-        print("[DEBUG] read_sensor_loop: Loop is active.")
-        value = read_mass()
-        timestamp = datetime.datetime.now().isoformat()
-        filename = os.path.join(DATA_DIR, f"{datetime.date.today()}.csv")
-        write_mass_to_csv(value, timestamp, filename)
-        time.sleep(0.5)
-    print("[DEBUG] read_sensor_loop: Thread exiting.")
+    try:
+        while sensor_thread_event.is_set():
+            print("[DEBUG] read_sensor_loop: Loop is active.")
+            value = read_mass()
+            timestamp = datetime.datetime.now().isoformat()
+            filename = os.path.join(DATA_DIR, f"{datetime.date.today()}.csv")
+            write_mass_to_csv(value, timestamp, filename)
+            time.sleep(0.5)
+    finally:
+        print("[DEBUG] read_sensor_loop: Thread exiting.")
+        sensor_thread_running = False  # <-- Clear when thread exits

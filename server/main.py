@@ -4,7 +4,7 @@ from models import Contact, User
 from video_streamer import VideoStreamer, CameraBusyException
 from sensor import (
     calibrate_start, calibrate_weight_read, calibrate_set_known_weight,
-    calibrate_status, read_sensor_loop, set_hx, load_calibration_ratio
+    calibrate_status, set_hx, load_calibration_ratio
 )
 import sensor
 from hx711_gpiod import HX711
@@ -209,6 +209,7 @@ def start_sensor_loop():
         return jsonify({"message": "Sensor reading loop already running."}), 400
     print("[DEBUG] /sensor/start: Creating and starting sensor thread...")
     sensor.sensor_thread_running = True
+    sensor.sensor_thread_event.set()
     sensor_thread = threading.Thread(target=sensor.read_sensor_loop, daemon=True)
     sensor_thread.start()
     return jsonify({"message": "Sensor reading loop started."}), 200
@@ -226,7 +227,7 @@ def stop_sensor_loop():
 
 @app.route('/sensor/status', methods=['GET'])
 def sensor_status():
-    return jsonify({"running": True}), 200
+    return jsonify({"running": sensor.sensor_thread_running}), 200
 
 # Stream Routes
 @app.route('/video_feed')
