@@ -1,6 +1,10 @@
 import csv
 import time
 import datetime
+import os
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+
 
 # This is a debugging version of sensor.py, with extra print statements to help diagnose calibration/reporting issues.
 DOUT_PIN = 21
@@ -124,16 +128,20 @@ def read_mass():
     return weight
 
 def write_mass_to_csv(mass, timestamp, filename):
+    write_header = not os.path.exists(filename)
     with open(filename, 'a', newline='') as f:
         writer = csv.writer(f)
+        if write_header:
+            writer.writerow(['Timestamp', 'Value'])
         writer.writerow([timestamp, mass])
-
 
 def read_sensor_loop():
     global sensor_thread_running
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
     while sensor_thread_running:
         value = read_mass()
         timestamp = datetime.datetime.now().isoformat()
-        filename = f"data/{datetime.date.today()}.csv"
+        filename = os.path.join(DATA_DIR, f"{datetime.date.today()}.csv")
         write_mass_to_csv(value, timestamp, filename)
         time.sleep(0.5)
