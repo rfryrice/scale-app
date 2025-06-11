@@ -134,6 +134,6 @@ def read_sensor_loop():
     while sensor_thread_running:
         value = read_mass()
         timestamp = datetime.datetime.now().isoformat()
-        filename = f"{datetime.date.today()}.csv"
+        filename = f"/data/{datetime.date.today()}.csv"
         write_mass_to_csv(value, timestamp, filename)
         time.sleep(0.5)
