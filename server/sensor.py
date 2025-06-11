@@ -4,7 +4,7 @@ import datetime
 import os
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
-
+CALIBRATION_FILE = os.path.join(DATA_DIR, "calibration_ratio.txt")
 
 # This is a debugging version of sensor.py, with extra print statements to help diagnose calibration/reporting issues.
 DOUT_PIN = 21
@@ -23,6 +23,25 @@ calibration_state = {
     "known_weight": None,
     "debug": {}
 }
+
+def save_calibration_ratio(ratio):
+    try:
+        with open(CALIBRATION_FILE, "w") as f:
+            f.write(str(ratio))
+        print(f"[DEBUG] Calibration ratio saved to {CALIBRATION_FILE}: {ratio}")
+    except Exception as e:
+        print(f"[DEBUG] Failed to save calibration ratio: {e}")
+
+def load_calibration_ratio():
+    try:
+        if os.path.exists(CALIBRATION_FILE):
+            with open(CALIBRATION_FILE, "r") as f:
+                ratio = float(f.read().strip())
+                print(f"[DEBUG] Calibration ratio loaded from {CALIBRATION_FILE}: {ratio}")
+                return ratio
+    except Exception as e:
+        print(f"[DEBUG] Failed to load calibration ratio: {e}")
+    return None
 
 def set_hx(new_hx):
     global hx
@@ -105,12 +124,16 @@ def calibrate_set_known_weight(value):
         calibration_state["step"] = "done"
         calibration_state["message"] = f"Calibration complete. Ratio set to {ratio:.4f}."
         calibration_state["in_progress"] = False
+
+        save_calibration_ratio(ratio)
+
         return True
     except Exception as e:
         calibration_state["message"] = f"Failed to set known weight: {str(e)}"
         calibration_state["step"] = "error"
         print(f"[DEBUG] Failed to set known weight: {e}")
         return False
+
 
 def calibrate_status():
     # Return all debug info as well for diagnosis

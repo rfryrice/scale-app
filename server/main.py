@@ -4,7 +4,8 @@ from models import Contact, User
 from video_streamer import VideoStreamer, CameraBusyException
 from sensor import (
     calibrate_start, calibrate_weight_read, calibrate_set_known_weight,
-    calibrate_status, read_sensor_loop, set_hx, sensor_thread_running
+    calibrate_status, read_sensor_loop, set_hx, sensor_thread_running,
+    load_calibration_ratio
 )
 from hx711_gpiod import HX711
 import csv
@@ -29,6 +30,13 @@ DOUT_PIN = 21
 PD_SCK_PIN = 20
 GPIO_CHIP = '/dev/gpiochip0'
 hx = HX711(dout_pin=DOUT_PIN, pd_sck_pin=PD_SCK_PIN, chip=GPIO_CHIP)
+
+# Load calibration on startup
+calibration_ratio = load_calibration_ratio()
+if calibration_ratio is not None:
+    hx.set_scale(calibration_ratio)
+    print(f"[DEBUG] Loaded and applied calibration ratio on startup: {calibration_ratio}")
+
 set_hx(hx)  # Make hx available in sensor module
 
 @app.route("/register", methods=["POST"])
