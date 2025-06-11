@@ -13,8 +13,6 @@ import time
 import threading
 from thread_report import report_gpiochip0_users
 
-report_gpiochip0_users()
-
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 # -- Recording controller --
@@ -277,4 +275,4 @@ if __name__ == "__main__":
     # Optionally start the thread automatically, or require /sensor/start API call
     # sensor_thread = threading.Thread(target=read_sensor_loop, daemon=True)
     # sensor_thread.start()
-    app.run(debug=True, port=8080, use_reloader=False)
+    app.run(debug=True, port=8080, host="0.0.0.0", use_reloader=False)

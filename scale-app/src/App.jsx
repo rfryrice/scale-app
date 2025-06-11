@@ -1,4 +1,3 @@
-import axios from "axios"
 import { useState, useEffect } from 'react'
 import { ColorModeContext, useMode } from './theme'
 import { CssBaseline, Drawer, ThemeProvider } from "@mui/material"
