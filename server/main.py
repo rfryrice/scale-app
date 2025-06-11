@@ -206,7 +206,9 @@ def api_calibrate_status():
 def start_sensor_loop():
     global sensor_thread, sensor_thread_running
     if sensor_thread_running:
+        print("[DEBUG] /sensor/start: Sensor reading loop already running.")
         return jsonify({"message": "Sensor reading loop already running."}), 400
+    print("[DEBUG] /sensor/start: Creating and starting sensor thread...")
     sensor_thread = threading.Thread(target=read_sensor_loop, daemon=True)
     sensor_thread_running = True
     sensor_thread.start()

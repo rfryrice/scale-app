@@ -160,11 +160,14 @@ def write_mass_to_csv(mass, timestamp, filename):
 
 def read_sensor_loop():
     global sensor_thread_running
+    print("[DEBUG] read_sensor_loop: Thread started.")
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
     while sensor_thread_running:
+        print("[DEBUG] read_sensor_loop: Loop is active.")
         value = read_mass()
         timestamp = datetime.datetime.now().isoformat()
         filename = os.path.join(DATA_DIR, f"{datetime.date.today()}.csv")
         write_mass_to_csv(value, timestamp, filename)
         time.sleep(0.5)
+    print("[DEBUG] read_sensor_loop: Thread exiting.")
