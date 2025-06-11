@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { LineChart } from '@mui/x-charts/LineChart';
 
+// Display graph data
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 // Helper to parse ISO string with 'Z' (UTC) to Date object

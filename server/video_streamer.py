@@ -46,8 +46,8 @@ class VideoStreamer:
             if self.frame is None:
                 return None
             # Convert RGB to BGR for OpenCV
-            bgr_frame = cv2.cvtColor(self.frame, cv2.COLOR_RGB2BGR)
-            ret, jpeg = cv2.imencode('.jpg', bgr_frame)
+            # bgr_frame = cv2.cvtColor(self.frame, cv2.COLOR_RGB2BGR)
+            ret, jpeg = cv2.imencode('.jpg', self.frame)
             return jpeg.tobytes() if ret else None
 
     def start_recording(self, filename="output.avi"):

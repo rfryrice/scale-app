@@ -19,6 +19,7 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 recording_lock = threading.Lock()
 recording_streamer = None
 recording_filename = None
+video_streamer_instance = None
 
 # -- Sensor thread --
 sensor_thread = None
@@ -170,6 +171,7 @@ def dashboard():
 @app.route('/sensor/calibrate/start', methods=['POST'])
 def api_calibrate_start():
     if calibrate_start():
+        
         return jsonify({"message": calibrate_status()["message"], "step": calibrate_status()["step"]}), 200
     else:
         return jsonify({"message": calibrate_status()["message"], "step": calibrate_status()["step"]}), 400
@@ -193,7 +195,7 @@ def api_calibrate_set_known_weight():
 def api_calibrate_status():
     return jsonify(calibrate_status()), 200
 
-# Sensor thread control
+# Sensor recoding thread control
 @app.route('/sensor/start', methods=['POST'])
 def start_sensor_loop():
     global sensor_thread, sensor_thread_running
@@ -211,9 +213,11 @@ def sensor_status():
 # Stream Routes
 @app.route('/video_feed')
 def video_feed():
+    global video_streamer_instance
     def generate():
         try:
             streamer = VideoStreamer()
+            video_streamer_instance = streamer
         except CameraBusyException:
             # Instead of streaming, yield a single error frame
             yield (b'--frame\r\nContent-Type: text/plain\r\n\r\n'
@@ -230,12 +234,19 @@ def video_feed():
                     time.sleep(0.1)
         finally:
             streamer.release()
+            if video_streamer_instance == streamer:
+                video_streamer_instance = None
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/start_recording', methods=['POST'])
 def start_recording():
-    global recording_streamer, recording_filename
+    global recording_streamer, recording_filename, video_streamer_instance
     with recording_lock:
+        if video_streamer_instance is not None:
+            video_streamer_instance.release()
+            video_streamer_instance = None
+            time.sleep(0.1)
+
         if recording_streamer is not None:
             return jsonify({"message": "Recording already in progress"}), 400
         filename = request.json.get('filename', 'output.avi')
@@ -275,6 +286,7 @@ if __name__ == "__main__":
     # Optionally start the thread automatically, or require /sensor/start API call
     # sensor_thread = threading.Thread(target=read_sensor_loop, daemon=True)
     # sensor_thread.start()
+
     # Use host if expose to network
     #app.run(debug=True, port=8080, host="0.0.0.0", use_reloader=False)
 
