@@ -269,7 +269,10 @@ def start_recording():
         if recording_streamer is not None:
             return jsonify({"message": "Recording already in progress"}), 400
         filename = request.json.get('filename', 'output.avi')
-        recording_streamer = VideoStreamer()
+        try:
+            recording_streamer = VideoStreamer()
+        except CameraBusyException:
+                        return jsonify({"message": "Camera is currently in use by another user."}), 503
         recording_streamer.start_recording(filename)
         recording_filename = filename
     return jsonify({"message": "Recording started", "filename": filename})
