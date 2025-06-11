@@ -201,8 +201,8 @@ def start_sensor_loop():
     if sensor_thread_running:
         return jsonify({"message": "Sensor reading loop already running."}), 400
     sensor_thread = threading.Thread(target=read_sensor_loop, daemon=True)
-    sensor_thread.start()
     sensor_thread_running = True
+    sensor_thread.start()
     return jsonify({"message": "Sensor reading loop started."}), 200
 
 @app.route('/sensor/stop', methods=['POST'])
