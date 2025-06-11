@@ -4,7 +4,7 @@ from models import Contact, User
 from video_streamer import VideoStreamer, CameraBusyException
 from sensor import (
     calibrate_start, calibrate_weight_read, calibrate_set_known_weight,
-    calibrate_status, read_sensor_loop, set_hx
+    calibrate_status, read_sensor_loop, set_hx, sensor_thread_running
 )
 from hx711_gpiod import HX711
 import csv
@@ -204,6 +204,17 @@ def start_sensor_loop():
     sensor_thread.start()
     sensor_thread_running = True
     return jsonify({"message": "Sensor reading loop started."}), 200
+
+@app.route('/sensor/stop', methods=['POST'])
+def stop_sensor_loop():
+    global sensor_thread, sensor_thread_running
+    if not sensor_thread_running:
+        return jsonify({"message": "Sensor is not running."}), 400
+    # Set a flag to stop the loop (implement this in your read_sensor_loop)
+    sensor_thread_running = False
+    sensor_thread = None
+    filename = f"{time.strftime('%Y-%m-%d')}.csv"
+    return jsonify({"message": "Sensor reading loop stopped.", "filename": filename}), 200
 
 @app.route('/sensor/status', methods=['GET'])
 def sensor_status():

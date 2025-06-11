@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
@@ -7,12 +7,13 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-function SensorControl() {
-  const [status, setStatus] = useState(null); // { step, message }
+function SensorControl({ onDataChanged }) {
+  const [status, setStatus] = useState(null); // Calibration status
   const [loading, setLoading] = useState(false);
   const [knownWeight, setKnownWeight] = useState("");
   const [sensorRunning, setSensorRunning] = useState(false);
   const [confirmationMsg, setConfirmationMsg] = useState("");
+  const [csvFilename, setCsvFilename] = useState(null);
 
   // Check sensor running status on mount and after calibration
   useEffect(() => {
@@ -21,12 +22,13 @@ function SensorControl() {
       .catch(() => setSensorRunning(false));
   }, []);
 
-  // Start calibration
+  // Start calibration flow
   const startCalibrate = async () => {
     setLoading(true);
     setStatus(null);
     setKnownWeight("");
     setConfirmationMsg("");
+    setCsvFilename(null);
     try {
       const res = await axios.post(`${API_URL}/sensor/calibrate/start`);
       setStatus(res.data);
@@ -75,12 +77,29 @@ function SensorControl() {
   // Start sensor data logging
   const startSensorLoop = async () => {
     setLoading(true);
+    setCsvFilename(null);
     try {
       const res = await axios.post(`${API_URL}/sensor/start`);
       setSensorRunning(true);
       setConfirmationMsg(res.data.message);
     } catch (err) {
       setConfirmationMsg(err?.response?.data?.message || "Error starting sensor loop");
+    }
+    setLoading(false);
+  };
+
+  // Stop sensor data logging
+  const stopSensorLoop = async () => {
+    setLoading(true);
+    setCsvFilename(null);
+    try {
+      const res = await axios.post(`${API_URL}/sensor/stop`);
+      setSensorRunning(false);
+      setConfirmationMsg(res.data.message);
+      setCsvFilename(res.data.filename);
+      if (onDataChanged) onDataChanged(); // Notify parent to refresh file list
+    } catch (err) {
+      setConfirmationMsg(err?.response?.data?.message || "Error stopping sensor loop");
     }
     setLoading(false);
   };
@@ -92,6 +111,11 @@ function SensorControl() {
       {confirmationMsg && (
         <Alert severity="success" sx={{ mb: 2 }}>
           {confirmationMsg}
+          {csvFilename && (
+            <div>
+              Data saved to: <strong>{csvFilename}</strong>
+            </div>
+          )}
         </Alert>
       )}
       {status && status.message && (
@@ -107,7 +131,7 @@ function SensorControl() {
             variant="contained"
             color="primary"
             onClick={startCalibrate}
-            disabled={loading}
+            disabled={loading || sensorRunning}
             sx={{ mr: 2 }}
           >
             Calibrate
@@ -123,9 +147,15 @@ function SensorControl() {
             </Button>
           )}
           {sensorRunning && (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              Sensor is running.
-            </Alert>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={stopSensorLoop}
+              disabled={loading}
+              sx={{ ml: 2 }}
+            >
+              Stop Sensor
+            </Button>
           )}
         </>
       )}

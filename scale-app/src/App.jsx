@@ -21,6 +21,7 @@ function App() {
   const [showRegister, setShowRegister] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [listKey, setListKey] = useState(0)
 
 
 // Example api call to backend
@@ -62,6 +63,8 @@ function App() {
     setSelectedFile(filename);
   };
 
+  const handleDataChanged = () => setListKey(k => k + 1);
+
   return (
     <ColorModeContext.Provider value={colorMode}>
       <ThemeProvider theme={theme}>
@@ -90,10 +93,10 @@ function App() {
 
                   {/* Flex layout for ListData and Dashboard */}
                   <div className="dashboard">
-                    <ListData onFileSelect={handleFileSelect} selectedFile={selectedFile} />
+                    <ListData key={listKey} onFileSelect={handleFileSelect} selectedFile={selectedFile} />
                     <Dashboard selectedFile={selectedFile} />
                     <LiveStream />
-                    <SensorControl />
+                    <SensorControl onDataChanged={handleDataChanged}/>
                   </div>
                 </>
               ) : showRegister ? (

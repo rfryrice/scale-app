@@ -8,6 +8,8 @@ PD_SCK_PIN = 20
 GPIO_CHIP = 'gpiochip0'
 hx = None
 
+sensor_thread_running = None
+
 calibration_state = {
     "in_progress": False,
     "step": None,
@@ -126,8 +128,10 @@ def write_mass_to_csv(mass, timestamp, filename):
         writer = csv.writer(f)
         writer.writerow([timestamp, mass])
 
+
 def read_sensor_loop():
-    while True:
+    global sensor_thread_running
+    while sensor_thread_running:
         value = read_mass()
         timestamp = datetime.datetime.now().isoformat()
         filename = f"{datetime.date.today()}.csv"
