@@ -12,7 +12,6 @@ import VideoControl from "./components/VideoControl"
 import TopBar from "./scenes/global/TopBar"
 import PersistentDrawerLeft from "./scenes/global/Drawer"
 import SensorControl from "./components/SensorControl"
-import RecordingControl from './components/RecordingControl'
 
 function App() {
   const [theme, colorMode] = useMode()
