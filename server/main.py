@@ -234,14 +234,17 @@ def sensor_status():
 def video_feed():
     global video_streamer_instance
     def generate():
-        try:
-            streamer = VideoStreamer()
-            video_streamer_instance = streamer
-        except CameraBusyException:
-            # Instead of streaming, yield a single error frame
-            yield (b'--frame\r\nContent-Type: text/plain\r\n\r\n'
-                   b'Camera is currently in use by another user.\r\n')
-            return
+        # Use existing livestream instance if present, else create one
+        streamer = video_streamer_instance
+        if streamer is None:
+            try:
+                streamer = VideoStreamer()
+                video_streamer_instance = streamer
+            except CameraBusyException:
+                # Instead of streaming, yield a single error frame
+                yield (b'--frame\r\nContent-Type: text/plain\r\n\r\n'
+                    b'Camera is currently in use by another user.\r\n')
+                return
 
         try:
             while True:
@@ -252,9 +255,11 @@ def video_feed():
                 else:
                     time.sleep(0.1)
         finally:
-            streamer.release()
-            if video_streamer_instance == streamer:
-                video_streamer_instance = None
+            # Only release if we created it here (not if it's the persistent livestream)
+            # If /livestream/start manages lifecycle, don't release here.
+            # So, only release if video_streamer_instance is not the same as our streamer at the end.
+            if video_streamer_instance != streamer:
+                streamer.release()
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/start_recording', methods=['POST'])
