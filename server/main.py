@@ -230,77 +230,43 @@ def sensor_status():
     return jsonify({"running": sensor.sensor_thread_running}), 200
 
 # Stream Routes
-@app.route('/video_feed')
-def video_feed():
+# ---- Livestream status endpoints ----
+@app.route('/livestream/start', methods=['POST'])
+def start_livestream():
+    global video_streamer_instance, recording_streamer
+    # Prevent starting if recording is active
+    if recording_streamer is not None:
+        return jsonify({"message": "Cannot start livestream while recording is active."}), 400
+    if video_streamer_instance is not None:
+        return jsonify({"message": "Livestream already running."}), 400
+    try:
+        streamer = VideoStreamer()
+        video_streamer_instance = streamer
+        # Optionally start a dummy frame grab to "activate" the stream
+        return jsonify({"message": "Livestream started."}), 200
+    except CameraBusyException:
+        return jsonify({"message": "Camera is currently in use by another user."}), 503
+
+@app.route('/livestream/stop', methods=['POST'])
+def stop_livestream():
     global video_streamer_instance
-    def generate():
-        try:
-            streamer = VideoStreamer()
-            video_streamer_instance = streamer
-        except CameraBusyException:
-            # Instead of streaming, yield a single error frame
-            yield (b'--frame\r\nContent-Type: text/plain\r\n\r\n'
-                   b'Camera is currently in use by another user.\r\n')
-            return
+    if video_streamer_instance is None:
+        return jsonify({"message": "Livestream is not running."}), 400
+    video_streamer_instance.release()
+    video_streamer_instance = None
+    return jsonify({"message": "Livestream stopped."}), 200
 
-        try:
-            while True:
-                frame = streamer.get_jpeg()
-                if frame:
-                    yield (b'--frame\r\n'
-                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-                else:
-                    time.sleep(0.1)
-        finally:
-            streamer.release()
-            if video_streamer_instance == streamer:
-                video_streamer_instance = None
-    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+@app.route('/livestream/status', methods=['GET'])
+def livestream_status():
+    # True if video_streamer_instance is active and not released
+    running = video_streamer_instance is not None
+    return jsonify({"running": running}), 200
 
-@app.route('/start_recording', methods=['POST'])
-def start_recording():
-    global recording_streamer, recording_filename, video_streamer_instance
-    with recording_lock:
-        if video_streamer_instance is not None:
-            video_streamer_instance.release()
-            video_streamer_instance = None
-            time.sleep(0.2)
-
-        if recording_streamer is not None:
-            return jsonify({"message": "Recording already in progress"}), 400
-        filename = request.json.get('filename', 'output.avi')
-        try:
-            recording_streamer = VideoStreamer()
-        except CameraBusyException:
-                        return jsonify({"message": "Camera is currently in use by another user."}), 503
-        recording_streamer.start_recording(filename)
-        recording_filename = filename
-    return jsonify({"message": "Recording started", "filename": filename})
-
-@app.route('/stop_recording', methods=['POST'])
-def stop_recording():
-    global recording_streamer, recording_filename
-    with recording_lock:
-        if recording_streamer is None:
-            return jsonify({"message": "No recording in progress"}), 400
-        recording_streamer.stop_recording()
-        recording_streamer.release()
-        recording_streamer = None
-        filename = recording_filename
-        recording_filename = None
-    return jsonify({"message": "Recording stopped", "filename": filename})
-
-@app.route("/api/users", methods=["GET"])
-def users():
-    return jsonify(
-        {
-            "users": [
-                "user1",
-                "user2",
-                "user3"
-            ]
-        }
-    )
+# ---- Recording status endpoint ----
+@app.route('/recording/status', methods=['GET'])
+def recording_status():
+    running = recording_streamer is not None
+    return jsonify({"running": running, "filename": recording_filename}), 200
 
 if __name__ == "__main__":
     with app.app_context():
