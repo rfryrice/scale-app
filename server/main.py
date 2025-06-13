@@ -20,7 +20,7 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 recording_lock = threading.Lock()
 recording_streamer = None
 recording_filename = None
-#video_streamer_instance = None
+video_streamer_instance = None
 
 # -- Sensor thread --
 sensor_thread = None
