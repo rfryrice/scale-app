@@ -108,11 +108,7 @@ function App() {
                   <div className="dashboard">
                     <ListData key={listKey} onFileSelect={handleFileSelect} selectedFile={selectedFile} />
                     <Dashboard selectedFile={selectedFile} />
-                    <LiveStream 
-                        disabled={isRecordingActive}
-                        onStart={() => setIsLivestreamActive(true)}
-                        onStop={() => setIsLivestreamActive(false)}
-                    />
+                    <LiveStream />
                     <RecordingControl />
                     <SensorControl onDataChanged={handleDataChanged}/>
                   </div>
