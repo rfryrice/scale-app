@@ -23,7 +23,9 @@ class VideoStreamer:
             self.frame = None
             self.lock = threading.Lock()
             self.running = True
-            threading.Thread(target=self._update_frame, daemon=True).start()
+            self.thread = threading.Thread(target=self._update_frame, daemon=True)
+            self.thread.start()
+            print(f"[DEBUG] VideoStreamer thread started: {self.thread.is_alive()}")
         except RuntimeError as e:
             if "Device or resource busy" in str(e) or "Pipeline handler in use by another process" in str(e):
                 raise CameraBusyException("Camera is currently in use.")
@@ -51,7 +53,7 @@ class VideoStreamer:
             return jpeg.tobytes() if ret else None
 
     def start_recording(self, filename="output.avi"):
-        print(f"[DEBUG] start_recording called. self.recording={getattr(self, 'recording', None)}")
+        print(f"[DEBUG] start_recording called. self.recording={getattr(self, 'recording', None)} | thread alive: {self.thread.is_alive()}")
         if not self.recording:
             with self.lock:
                 if self.frame is not None:
@@ -61,17 +63,21 @@ class VideoStreamer:
                 fourcc = cv2.VideoWriter_fourcc(*'XVID')
                 self.writer = cv2.VideoWriter(filename, fourcc, 20.0, (w, h))
             self.recording = True
-        print(f"[DEBUG] start_recording finished. self.recording={getattr(self, 'recording', None)}")
-
+        print(f"[DEBUG] start_recording finished. self.recording={getattr(self, 'recording', None)} | thread alive: {self.thread.is_alive()}")
 
     def stop_recording(self):
+        print(f"[DEBUG] stop_recording called. self.recording={self.recording} | thread alive: {self.thread.is_alive()}")
         if self.recording:
             self.recording = False
             if self.writer:
                 self.writer.release()
                 self.writer = None
+        print(f"[DEBUG] After stop_recording: self.recording={self.recording} | thread alive: {self.thread.is_alive()}")
 
     def release(self):
+        print(f"[DEBUG] release called. Thread alive before: {self.thread.is_alive()}")
         self.running = False
         self.stop_recording()
+        self.thread.join(timeout=2)
+        print(f"[DEBUG] release finished. Thread alive after: {self.thread.is_alive()}")
         self.picam2.stop()
