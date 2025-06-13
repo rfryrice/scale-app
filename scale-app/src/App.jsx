@@ -12,11 +12,14 @@ import LiveStream from "./components/LiveStream"
 import TopBar from "./scenes/global/TopBar"
 import PersistentDrawerLeft from "./scenes/global/Drawer"
 import SensorControl from "./components/SensorControl"
+import RecordingControl from './components/RecordingControl'
 
 function App() {
   const [theme, colorMode] = useMode()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isSidebar, setIsSidebar] = useState(true)
+  const [isLivestreamActive, setIsLivestreamActive] = useState(false);
+  const [isRecordingActive, setIsRecordingActive] = useState(false);
   const [username, setUsername] = useState('')
   const [showRegister, setShowRegister] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
@@ -37,6 +40,16 @@ function App() {
     const savedUsername = localStorage.getItem('username') || '';
     setIsLoggedIn(savedLogin);
     setUsername(savedUsername);
+    const fetchStatuses = async () => {
+      const liveRes = await axios.get(`${API_URL}/livestream/status`);
+      setIsLivestreamActive(liveRes.data.running);
+
+      const recRes = await axios.get(`${API_URL}/recording/status`);
+      setIsRecordingActive(recRes.data.running);
+    };
+    fetchStatuses();
+    const interval = setInterval(fetchStatuses, 2000); // Poll every 2s
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogin = (user) => {
@@ -95,7 +108,12 @@ function App() {
                   <div className="dashboard">
                     <ListData key={listKey} onFileSelect={handleFileSelect} selectedFile={selectedFile} />
                     <Dashboard selectedFile={selectedFile} />
-                    <LiveStream />
+                    <LiveStream 
+                        disabled={isRecordingActive}
+                        onStart={() => setIsLivestreamActive(true)}
+                        onStop={() => setIsLivestreamActive(false)}
+                    />
+                    <RecordingControl />
                     <SensorControl onDataChanged={handleDataChanged}/>
                   </div>
                 </>

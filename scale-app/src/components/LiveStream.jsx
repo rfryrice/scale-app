@@ -1,98 +1,97 @@
-import React, { useState, useRef } from "react";
-import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
-import Typography from "@mui/material/Typography";
-import axios from "axios";
+import React, { useEffect, useState, useRef } from 'react';
+import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const STREAM_URL = `${API_URL}/video_feed`;
-
 function LiveStream() {
-  const [recording, setRecording] = useState(false);
-  const [msg, setMsg] = useState("");
-  const [streamError, setStreamError] = useState(false);
-  const imgRef = useRef();
+  const [isLivestreamActive, setIsLivestreamActive] = useState(false);
+  const [isRecordingActive, setIsRecordingActive] = useState(false);
+  const [error, setError] = useState('');
+  const intervalRef = useRef(null);
 
-  const handleStart = async () => {
+  // Fetch livestream and recording status periodically
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const [livestreamRes, recordingRes] = await Promise.all([
+          axios.get(`${API_URL}/livestream/status`),
+          axios.get(`${API_URL}/recording/status`)
+        ]);
+        setIsLivestreamActive(livestreamRes.data.running);
+        setIsRecordingActive(recordingRes.data.running);
+      } catch (err) {
+        setError('Failed to fetch stream status from backend.');
+      }
+    };
+    fetchStatus();
+    intervalRef.current = setInterval(fetchStatus, 2000); // Poll every 2 seconds
+    return () => clearInterval(intervalRef.current);
+  }, []);
+
+  // Start livestream handler
+  const handleStartLivestream = async () => {
+    setError('');
     try {
-      await axios.post(`${API_URL}/start_recording`, {
-        filename: "recorded_" + Date.now() + ".avi"
-      });
-      setRecording(true);
-      setMsg("Recording started.");
-    } catch (e) {
-      setMsg("Failed to start recording.");
+      await axios.post(`${API_URL}/livestream/start`);
+      setIsLivestreamActive(true);
+    } catch (err) {
+      setError(
+        err.response && err.response.data && err.response.data.message
+          ? err.response.data.message
+          : 'Failed to start livestream.'
+      );
     }
   };
 
-  const handleStop = async () => {
+  // Stop livestream handler
+  const handleStopLivestream = async () => {
+    setError('');
     try {
-      await axios.post(`${API_URL}/stop_recording`);
-      setRecording(false);
-      setMsg("Recording stopped.");
-    } catch (e) {
-      setMsg("Failed to stop recording.");
+      await axios.post(`${API_URL}/livestream/stop`);
+      setIsLivestreamActive(false);
+    } catch (err) {
+      setError(
+        err.response && err.response.data && err.response.data.message
+          ? err.response.data.message
+          : 'Failed to stop livestream.'
+      );
     }
-  };
-
-  // Error handling for stream
-  const handleImageError = () => {
-    setStreamError(true);
-    setMsg("Camera is currently in use by another user or tab.");
-  };
-
-  // Reset error if stream is retried
-  const handleImageLoad = () => {
-    setStreamError(false);
-    setMsg("");
   };
 
   return (
-    <Paper elevation={4} sx={{ p: 2, margin: "2rem auto", maxWidth: 700 }}>
-      <Typography variant="h6" gutterBottom>
-        Live Camera Feed
-      </Typography>
-      <div style={{ background: "#111", textAlign: "center" }}>
-        {!streamError ? (
+    <div style={{ minWidth: 350 }}>
+      <h2>Livestream</h2>
+      <div>
+        <button
+          onClick={handleStartLivestream}
+          disabled={isLivestreamActive || isRecordingActive}
+        >
+          Start Livestream
+        </button>
+        <button
+          onClick={handleStopLivestream}
+          disabled={!isLivestreamActive}
+        >
+          Stop Livestream
+        </button>
+      </div>
+      {isRecordingActive && (
+        <div style={{ color: 'red', marginTop: '1em' }}>
+          Cannot start livestream while recording is active.
+        </div>
+      )}
+      {error && <div style={{ color: 'red', marginTop: '1em' }}>{error}</div>}
+      {isLivestreamActive && (
+        <div style={{ marginTop: '1em' }}>
+          {/* Replace with your actual <video> or <img> tag for stream video feed */}
           <img
-            ref={imgRef}
-            src={STREAM_URL}
-            alt="Camera Stream"
-            style={{ width: "100%", maxWidth: 640, borderRadius: 8 }}
-            onError={handleImageError}
-            onLoad={handleImageLoad}
+            src={`${API_URL}/video_feed`}
+            alt="Livestream"
+            style={{ width: '320px', border: '2px solid #333' }}
           />
-        ) : (
-          <Typography color="error" style={{padding: '2em', fontWeight: 'bold'}}>
-            Camera is currently in use by another user or tab.<br/>
-            Please close other streams and refresh this page.
-          </Typography>
-        )}
-      </div>
-      <div style={{ marginTop: 16 }}>
-        <Button
-          variant="contained"
-          color="success"
-          onClick={handleStart}
-          disabled={recording || streamError}
-          sx={{ mr: 2 }}
-        >
-          Start Recording
-        </Button>
-        <Button
-          variant="contained"
-          color="error"
-          onClick={handleStop}
-          disabled={!recording || streamError}
-        >
-          Stop Recording
-        </Button>
-      </div>
-      <Typography variant="body2" color="primary" sx={{ mt: 2 }}>
-        {msg}
-      </Typography>
-    </Paper>
+        </div>
+      )}
+    </div>
   );
 }
 
