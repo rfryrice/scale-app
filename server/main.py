@@ -234,7 +234,8 @@ def start_video():
     global video_streamer, video_mode, video_filename
     data = request.json or {}
     mode = data.get('mode')  # "livestream" or "record"
-    filename = data.get('filename', f"output_{int(time.time())}.avi")
+    timestamp_str = time.strftime('%Y-%m-%d')
+    filename = data.get('filename', f"{timestamp_str}.avi")
     with video_lock:
         if video_streamer is not None:
             return jsonify({"message": f"Video already running in {video_mode} mode."}), 400

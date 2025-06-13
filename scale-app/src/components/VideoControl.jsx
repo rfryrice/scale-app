@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
+import Button from "@mui/material/Button";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -57,24 +58,24 @@ function VideoControl() {
     <div style={{ minWidth: 350 }}>
       <h2>Video Control</h2>
       <div>
-        <button
+        <Button
           onClick={() => handleStart("livestream")}
           disabled={videoStatus.running}
         >
           Start Livestream
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => handleStart("record")}
           disabled={videoStatus.running}
         >
           Start Recording
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={handleStop}
           disabled={!videoStatus.running}
         >
           Stop
-        </button>
+        </Button>
       </div>
       {videoStatus.mode === 'record' && videoStatus.filename && (
         <div style={{ color: 'green', marginTop: '1em' }}>
@@ -82,7 +83,7 @@ function VideoControl() {
         </div>
       )}
       {error && <div style={{ color: 'red', marginTop: '1em' }}>{error}</div>}
-      {videoStatus.running && (
+      {videoStatus.running && videoStatus.mode === 'livestream' && (
         <div style={{ marginTop: '1em' }}>
           <img
             src={`${API_URL}/video_feed?${Date.now()}`}
