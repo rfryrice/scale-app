@@ -8,7 +8,7 @@ import LoginForm from "./components/Login"
 import RegisterForm from "./components/Register"
 import Dashboard from "./components/Dashboard"
 import ListData from "./components/ListData"
-import LiveStream from "./components/LiveStream"
+import VideoControl from "./components/VideoControl"
 import TopBar from "./scenes/global/TopBar"
 import PersistentDrawerLeft from "./scenes/global/Drawer"
 import SensorControl from "./components/SensorControl"
@@ -108,8 +108,7 @@ function App() {
                   <div className="dashboard">
                     <ListData key={listKey} onFileSelect={handleFileSelect} selectedFile={selectedFile} />
                     <Dashboard selectedFile={selectedFile} />
-                    <LiveStream />
-                    <RecordingControl />
+                    <VideoControl />
                     <SensorControl onDataChanged={handleDataChanged}/>
                   </div>
                 </>

@@ -16,11 +16,11 @@ from thread_report import report_gpiochip0_users
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
-# -- Recording controller --
-recording_lock = threading.Lock()
-recording_streamer = None
-recording_filename = None
-video_streamer_instance = None
+# --- Video state ---
+video_lock = threading.Lock()
+video_streamer = None
+video_mode = None  # None, 'livestream', or 'record'
+video_filename = None
 
 # -- Sensor thread --
 sensor_thread = None
@@ -229,23 +229,66 @@ def stop_sensor_loop():
 def sensor_status():
     return jsonify({"running": sensor.sensor_thread_running}), 200
 
-# Stream Routes
+@app.route('/video/start', methods=['POST'])
+def start_video():
+    global video_streamer, video_mode, video_filename
+    data = request.json or {}
+    mode = data.get('mode')  # "livestream" or "record"
+    filename = data.get('filename', f"output_{int(time.time())}.avi")
+    with video_lock:
+        if video_streamer is not None:
+            return jsonify({"message": f"Video already running in {video_mode} mode."}), 400
+        try:
+            video_streamer = VideoStreamer()
+            if mode == 'record':
+                video_streamer.start_recording(filename)
+                video_mode = 'record'
+                video_filename = filename
+            elif mode == 'livestream':
+                video_mode = 'livestream'
+                video_filename = None
+            else:
+                video_streamer.release()
+                video_streamer = None
+                return jsonify({"message": "Invalid mode."}), 400
+            return jsonify({"message": f"{mode.capitalize()} started.", "mode": video_mode, "filename": video_filename}), 200
+        except CameraBusyException:
+            return jsonify({"message": "Camera is currently in use by another user."}), 503
+
+@app.route('/video/stop', methods=['POST'])
+def stop_video():
+    global video_streamer, video_mode, video_filename
+    with video_lock:
+        if video_streamer is None:
+            return jsonify({"message": "No video in progress."}), 400
+        if video_mode == 'record':
+            video_streamer.stop_recording()
+        video_streamer.release()
+        video_streamer = None
+        stopped_mode = video_mode
+        stopped_filename = video_filename
+        video_mode = None
+        video_filename = None
+    return jsonify({"message": f"{stopped_mode.capitalize()} stopped.", "mode": stopped_mode, "filename": stopped_filename}), 200
+
+@app.route('/video/status', methods=['GET'])
+def video_status():
+    running = video_streamer is not None
+    return jsonify({
+        "running": running,
+        "mode": video_mode,
+        "filename": video_filename
+    }), 200
+
 @app.route('/video_feed')
 def video_feed():
-    global video_streamer_instance
+    global video_streamer
     def generate():
-        # Use existing livestream instance if present, else create one
-        streamer = video_streamer_instance
+        streamer = video_streamer
         if streamer is None:
-            try:
-                streamer = VideoStreamer()
-                video_streamer_instance = streamer
-            except CameraBusyException:
-                # Instead of streaming, yield a single error frame
-                yield (b'--frame\r\nContent-Type: text/plain\r\n\r\n'
-                    b'Camera is currently in use by another user.\r\n')
-                return
-
+            yield (b'--frame\r\nContent-Type: text/plain\r\n\r\n'
+                   b"No stream running.\r\n")
+            return
         try:
             while True:
                 frame = streamer.get_jpeg()
@@ -254,84 +297,9 @@ def video_feed():
                         b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
                 else:
                     time.sleep(0.1)
-        finally:
-            # Only release if we created it here (not if it's the persistent livestream)
-            # If /livestream/start manages lifecycle, don't release here.
-            # So, only release if video_streamer_instance is not the same as our streamer at the end.
-            if video_streamer_instance != streamer:
-                streamer.release()
+        except Exception:
+            pass
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-@app.route('/start_recording', methods=['POST'])
-def start_recording():
-    global recording_streamer, recording_filename, video_streamer_instance
-    with recording_lock:
-        if video_streamer_instance is not None:
-            video_streamer_instance.release()
-            video_streamer_instance = None
-            time.sleep(0.2)
-
-        if recording_streamer is not None:
-            return jsonify({"message": "Recording already in progress"}), 400
-        filename = request.json.get('filename', 'output.avi')
-        try:
-            recording_streamer = VideoStreamer()
-        except CameraBusyException:
-                        return jsonify({"message": "Camera is currently in use by another user."}), 503
-        recording_streamer.start_recording(filename)
-        recording_filename = filename
-    return jsonify({"message": "Recording started", "filename": filename})
-
-@app.route('/stop_recording', methods=['POST'])
-def stop_recording():
-    global recording_streamer, recording_filename
-    with recording_lock:
-        if recording_streamer is None:
-            return jsonify({"message": "No recording in progress"}), 400
-        recording_streamer.stop_recording()
-        recording_streamer.release()
-        recording_streamer = None
-        filename = recording_filename
-        recording_filename = None
-    return jsonify({"message": "Recording stopped", "filename": filename})
-
-# ---- Livestream status endpoints ----
-@app.route('/livestream/start', methods=['POST'])
-def start_livestream():
-    global video_streamer_instance, recording_streamer
-    # Prevent starting if recording is active
-    if recording_streamer is not None:
-        return jsonify({"message": "Cannot start livestream while recording is active."}), 400
-    if video_streamer_instance is not None:
-        return jsonify({"message": "Livestream already running."}), 400
-    try:
-        streamer = VideoStreamer()
-        video_streamer_instance = streamer
-        # Optionally start a dummy frame grab to "activate" the stream
-        return jsonify({"message": "Livestream started."}), 200
-    except CameraBusyException:
-        return jsonify({"message": "Camera is currently in use by another user."}), 503
-
-@app.route('/livestream/stop', methods=['POST'])
-def stop_livestream():
-    global video_streamer_instance
-    if video_streamer_instance is None:
-        return jsonify({"message": "Livestream is not running."}), 400
-    video_streamer_instance.release()
-    video_streamer_instance = None
-    return jsonify({"message": "Livestream stopped."}), 200
-
-@app.route('/livestream/status', methods=['GET'])
-def livestream_status():
-    # True if video_streamer_instance is active and not released
-    running = video_streamer_instance is not None
-    return jsonify({"running": running}), 200
-
-# ---- Recording status endpoint ----
-@app.route('/recording/status', methods=['GET'])
-def recording_status():
-    running = recording_streamer is not None
-    return jsonify({"running": running, "filename": recording_filename}), 200
 
 if __name__ == "__main__":
     with app.app_context():
