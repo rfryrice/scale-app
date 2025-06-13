@@ -20,7 +20,7 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 recording_lock = threading.Lock()
 recording_streamer = None
 recording_filename = None
-video_streamer_instance = None
+#video_streamer_instance = None
 
 # -- Sensor thread --
 sensor_thread = None
@@ -264,7 +264,7 @@ def start_recording():
         if video_streamer_instance is not None:
             video_streamer_instance.release()
             video_streamer_instance = None
-            time.sleep(0.1)
+            time.sleep(0.2)
 
         if recording_streamer is not None:
             return jsonify({"message": "Recording already in progress"}), 400
