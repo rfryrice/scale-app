@@ -51,6 +51,7 @@ class VideoStreamer:
             return jpeg.tobytes() if ret else None
 
     def start_recording(self, filename="output.avi"):
+        print(f"[DEBUG] start_recording called. self.recording={getattr(self, 'recording', None)}")
         if not self.recording:
             with self.lock:
                 if self.frame is not None:
@@ -60,6 +61,8 @@ class VideoStreamer:
                 fourcc = cv2.VideoWriter_fourcc(*'XVID')
                 self.writer = cv2.VideoWriter(filename, fourcc, 20.0, (w, h))
             self.recording = True
+        print(f"[DEBUG] start_recording finished. self.recording={getattr(self, 'recording', None)}")
+
 
     def stop_recording(self):
         if self.recording:
