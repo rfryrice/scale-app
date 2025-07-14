@@ -170,6 +170,7 @@ def read_sensor_loop():
         while sensor_thread_event.is_set():
             print("[DEBUG] read_sensor_loop: Loop is active.")
             value = read_mass()
+            set_sensor_value(value)
             timestamp = datetime.datetime.now().isoformat()
             filename = os.path.join(DATA_DIR, f"{datetime.date.today()}.csv")
             write_mass_to_csv(value, timestamp, filename)
@@ -177,3 +178,11 @@ def read_sensor_loop():
     finally:
         print("[DEBUG] read_sensor_loop: Thread exiting.")
         sensor_thread_running = False  # <-- Clear when thread exits
+
+def set_sensor_value(val):
+    global latest_sensor_value
+    latest_sensor_value = val
+
+def get_sensor_value():
+    global latest_sensor_value
+    return latest_sensor_value
