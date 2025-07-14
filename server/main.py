@@ -230,7 +230,7 @@ def sensor_status():
     return jsonify({"running": sensor.sensor_thread_running}), 200
 
 @app.route('/sensor/value', methods=['GET'])
-def sensor_value():
+def get_sensor_value():
     if not sensor.sensor_thread_event.is_set():
         return jsonify({"message": "Sensor is not running."}), 400
     value = sensor.get_sensor_value()
