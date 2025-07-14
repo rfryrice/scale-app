@@ -63,6 +63,9 @@
   gap: 2rem;
 }
 
+.video-button {
+  background-color: beige;
+}
 .read-the-docs {
   color: #888;
 }

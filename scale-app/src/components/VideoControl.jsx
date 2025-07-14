@@ -59,12 +59,15 @@ function VideoControl() {
       <h2>Video Control</h2>
       <div>
         <Button
+          className='video-button'
           onClick={() => handleStart("livestream")}
           disabled={videoStatus.running}
         >
           Start Livestream
         </Button>
         <Button
+          className='video-button'
+          color = "primary"
           onClick={() => handleStart("record")}
           disabled={videoStatus.running}
         >
