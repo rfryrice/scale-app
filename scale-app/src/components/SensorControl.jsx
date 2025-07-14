@@ -32,7 +32,13 @@ function SensorControl({ onDataChanged }) {
       // Fetch sensor value every 500ms
       intervalId = setInterval(() => {
         axios.get(`${API_URL}/sensor/value`)
-          .then(res => setSensorValue(res.data.value))
+          .then(res => {
+            let val = res.data.value;
+            if (typeof val === "number") {
+              setSensorValue(val.toFixed(2)); // Format to 2 decimal places
+            }
+            else setSensorValue(val); // Handle unexpected response
+            })
           .catch(() => setSensorValue(null));
       }, 500);
     } else {
