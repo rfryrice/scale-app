@@ -38,12 +38,29 @@
   min-width: 80vw;
 }
 
-.dashboard {
-  display: "flex";
-  justify-content: "start";
-  align-items: "self-start";
-  gap: "2rem";
-  
+.dashboard-layout {
+  width: 100%;
+  max-width: 1400px;
+  margin: 2rem auto;
+}
+
+.dashboard-container {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.dashboard-sidebar {
+  flex: 0 0 350px;
+  min-width: 300px;
+}
+
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .read-the-docs {

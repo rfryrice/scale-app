@@ -97,18 +97,23 @@ function App() {
             <h1>Scale-App</h1>
             <p>Interface with scale and livestream using this app</p>
 
-            <div className="card">
+            <div className="dashboard-layout">
               {isLoggedIn ? (
                 <>
                   <p>Welcome, {username}!</p>
                   <button onClick={handleLogout}>Log out</button>
 
                   {/* Flex layout for ListData and Dashboard */}
-                  <div className="dashboard">
-                    <ListData key={listKey} onFileSelect={handleFileSelect} selectedFile={selectedFile} />
-                    <Dashboard selectedFile={selectedFile} />
-                    <VideoControl />
-                    <SensorControl onDataChanged={handleDataChanged}/>
+                  <div className="dashboard-container">
+                    <div className='dashboard-sidebar'>
+                      <ListData key={listKey} onFileSelect={handleFileSelect} selectedFile={selectedFile} />
+                    </div>
+                    <div className='dashboard-main'>
+                      <Dashboard selectedFile={selectedFile} />
+                      <VideoControl />
+                      <SensorControl onDataChanged={handleDataChanged}/>
+                    </div>
+
                   </div>
                 </>
               ) : showRegister ? (
