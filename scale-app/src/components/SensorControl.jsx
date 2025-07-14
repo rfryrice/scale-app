@@ -4,6 +4,7 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
+import SevenSegmentDisplay from "./SevenSegmentDisplay";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -14,6 +15,8 @@ function SensorControl({ onDataChanged }) {
   const [sensorRunning, setSensorRunning] = useState(false);
   const [confirmationMsg, setConfirmationMsg] = useState("");
   const [csvFilename, setCsvFilename] = useState(null);
+  const [sensorValue, setSensorValue] = useState(null);
+
 
   // Check sensor running status on mount and after calibration
   useEffect(() => {
@@ -21,6 +24,22 @@ function SensorControl({ onDataChanged }) {
       .then(res => setSensorRunning(res.data.running))
       .catch(() => setSensorRunning(false));
   }, []);
+
+  // Poll sensor value when running
+  useEffect(() => {
+    let intervalId;
+    if (sensorRunning) {
+      // Fetch sensor value every 500ms
+      intervalId = setInterval(() => {
+        axios.get(`${API_URL}/sensor/value`)
+          .then(res => setSensorValue(res.data.value))
+          .catch(() => setSensorValue(null));
+      }, 500);
+    } else {
+      setSensorValue(null);
+    }
+    return () => clearInterval(intervalId);
+  }, [sensorRunning]);
 
   // Start calibration flow
   const startCalibrate = async () => {
@@ -108,6 +127,11 @@ function SensorControl({ onDataChanged }) {
   return (
     <div style={{ minWidth: 300 }}>
       <h2>Sensor Control</h2>
+      {sensorRunning && (
+        <div style={{ marginBottom: 16 }}>
+          <SevenSegmentDisplay value={sensorValue} />
+        </div>
+      )}
       {confirmationMsg && (
         <Alert severity="success" sx={{ mb: 2 }}>
           {confirmationMsg}
@@ -166,7 +190,7 @@ function SensorControl({ onDataChanged }) {
           onClick={readWeight}
           disabled={loading}
         >
-          Read Weight
+          Continue
         </Button>
       )}
       {status?.step === "enter_weight" && (
