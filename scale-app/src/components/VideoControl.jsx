@@ -59,6 +59,7 @@ function VideoControl() {
       <h2>Video Control</h2>
       <div>
         <Button
+          variant = "contained"
           color = "primary"
           onClick={() => handleStart("livestream")}
           disabled={videoStatus.running}
@@ -66,7 +67,7 @@ function VideoControl() {
           Start Livestream
         </Button>
         <Button
-          
+          variant = "contained"
           color = "primary"
           onClick={() => handleStart("record")}
           disabled={videoStatus.running}
