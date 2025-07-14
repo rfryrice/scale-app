@@ -229,6 +229,15 @@ def stop_sensor_loop():
 def sensor_status():
     return jsonify({"running": sensor.sensor_thread_running}), 200
 
+@app.route('/sensor/value', methods=['GET'])
+def sensor_value():
+    if not sensor.sensor_thread_event.is_set():
+        return jsonify({"message": "Sensor is not running."}), 400
+    value = sensor.get_sensor_value()
+    if value is None:
+        return jsonify({"message": "No sensor value available."}), 204
+    return jsonify({"value": value}), 200
+
 @app.route('/video/start', methods=['POST'])
 def start_video():
     global video_streamer, video_mode, video_filename
