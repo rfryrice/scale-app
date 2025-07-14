@@ -68,7 +68,7 @@ function VideoControl() {
         </Button>
         <Button
           variant = "contained"
-          color = "primary"
+          color = "secondary"
           onClick={() => handleStart("record")}
           disabled={videoStatus.running}
         >
