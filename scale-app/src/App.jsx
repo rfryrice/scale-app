@@ -40,10 +40,10 @@ function App() {
     setIsLoggedIn(savedLogin);
     setUsername(savedUsername);
     const fetchStatuses = async () => {
-      const liveRes = await axios.get(`${API_URL}/livestream/status`);
+      const liveRes = await axios.get(`${API_URL}/video/status`);
       setIsLivestreamActive(liveRes.data.running);
 
-      const recRes = await axios.get(`${API_URL}/recording/status`);
+      const recRes = await axios.get(`${API_URL}/video/status`);
       setIsRecordingActive(recRes.data.running);
     };
     fetchStatuses();
