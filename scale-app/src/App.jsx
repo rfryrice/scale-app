@@ -39,7 +39,8 @@ function App() {
     const savedUsername = localStorage.getItem('username') || '';
     setIsLoggedIn(savedLogin);
     setUsername(savedUsername);
-    const fetchStatuses = async () => {
+
+    /* const fetchStatuses = async () => {
       const liveRes = await axios.get(`${API_URL}/video/status`);
       setIsLivestreamActive(liveRes.data.running);
 
@@ -48,7 +49,7 @@ function App() {
     };
     fetchStatuses();
     const interval = setInterval(fetchStatuses, 2000); // Poll every 2s
-    return () => clearInterval(interval);
+    return () => clearInterval(interval); */
   }, []);
 
   const handleLogin = (user) => {
