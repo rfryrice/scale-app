@@ -14,7 +14,10 @@ function VideoControl() {
   const [error, setError] = useState("");
   const [polling, setPolling] = useState(false);
   const [filename, setFilename] = useState("");
+  const [recordStartTime, setRecordStartTime] = useState(null);
+  const [recordRuntime, setRecordRuntime] = useState("00:00:00");
   const intervalRef = useRef(null);
+  const runtimeIntervalRef = useRef(null);
 
   // Fetch status only if polling (i.e. after starting)
   useEffect(() => {
@@ -34,12 +37,86 @@ function VideoControl() {
     }
   }, [polling]);
 
+  // Track recording runtime and handle midnight rollover
+  useEffect(() => {
+    if (videoStatus.running && videoStatus.mode === "record") {
+      if (!recordStartTime) {
+        setRecordStartTime(Date.now());
+      }
+      runtimeIntervalRef.current = setInterval(async () => {
+        if (recordStartTime) {
+          const now = new Date();
+          const start = new Date(recordStartTime);
+          const elapsed = Date.now() - recordStartTime;
+          const hours = Math.floor(elapsed / 3600000);
+          const minutes = Math.floor((elapsed % 3600000) / 60000);
+          const seconds = Math.floor((elapsed % 60000) / 1000);
+          setRecordRuntime(
+            `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+          );
+          // Check if midnight has passed
+          if (
+            start.getDate() !== now.getDate() ||
+            start.getMonth() !== now.getMonth() ||
+            start.getFullYear() !== now.getFullYear()
+          ) {
+            // Stop current recording and start a new one
+            try {
+              await axios.post(`${API_URL}/video/stop`);
+              // Wait a moment to ensure backend is ready
+              setTimeout(async () => {
+                const formatted = `${now.getFullYear()}-${String(
+                  now.getMonth() + 1
+                ).padStart(2, "0")}-${String(now.getDate()).padStart(
+                  2,
+                  "0"
+                )}_${String(now.getHours()).padStart(2, "0")}-${String(
+                  now.getMinutes()
+                ).padStart(2, "0")}-${String(now.getSeconds()).padStart(
+                  2,
+                  "0"
+                )}`;
+                const newFilename = `output_${formatted}.avi`;
+                const res = await axios.post(`${API_URL}/video/start`, {
+                  mode: "record",
+                  filename: newFilename,
+                });
+                setVideoStatus(res.data);
+                setRecordStartTime(Date.now());
+                setRecordRuntime("00:00:00");
+                setFilename(newFilename);
+              }, 1000);
+            } catch (err) {
+              setError(
+                err.response?.data?.message ||
+                  "Failed to rollover recording at midnight."
+              );
+              setPolling(false);
+            }
+          }
+        }
+      }, 1000);
+      return () => clearInterval(runtimeIntervalRef.current);
+    } else {
+      setRecordStartTime(null);
+      setRecordRuntime("00:00:00");
+      clearInterval(runtimeIntervalRef.current);
+    }
+  }, [videoStatus.running, videoStatus.mode, recordStartTime]);
+
   // Start livestream or recording
   const handleStart = async (mode) => {
     setError("");
     try {
       const now = new Date(Date.now());
-      const formatted = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}-${String(now.getMinutes()).padStart(2, "0")}-${String(now.getSeconds()).padStart(2, "0")}`;
+      const formatted = `${now.getFullYear()}-${String(
+        now.getMonth() + 1
+      ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}_${String(
+        now.getHours()
+      ).padStart(2, "0")}-${String(now.getMinutes()).padStart(
+        2,
+        "0"
+      )}-${String(now.getSeconds()).padStart(2, "0")}`;
       const body =
         mode === "record"
           ? { mode, filename: filename || `output_${formatted}.avi` }
@@ -47,6 +124,9 @@ function VideoControl() {
       const res = await axios.post(`${API_URL}/video/start`, body);
       setVideoStatus(res.data);
       setPolling(true);
+      if (mode === "record") {
+        setRecordStartTime(Date.now());
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to start.");
     }
@@ -59,6 +139,8 @@ function VideoControl() {
       await axios.post(`${API_URL}/video/stop`);
       setVideoStatus({ running: false, mode: null, filename: null });
       setPolling(false);
+      setRecordStartTime(null);
+      setRecordRuntime("00:00:00");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to stop.");
     }
@@ -66,7 +148,7 @@ function VideoControl() {
 
   return (
     <div style={{ minWidth: 350 }}>
-      <Tooltip title="Control livestream and recording from here" arrow>
+      <Tooltip title="Control livestream and recording from here">
         <h2>Video Control</h2>
       </Tooltip>
       <div>
@@ -97,17 +179,19 @@ function VideoControl() {
         </Button>
       </div>
       {videoStatus.mode === "record" && videoStatus.filename && (
-        <div style={{ color: "green", marginTop: "1em" }}>
-          Recording to file: <strong>{videoStatus.filename}</strong>
+        <div style={{ color: "green", marginTop: "1em", display: "flex", alignItems: "center", gap: "1em" }}>
+          Recording to file: <strong>{videoStatus.filename}</strong> 
+          Runtime: <span style={{ fontWeight: "bold" }}>{recordRuntime}</span>
         </div>
       )}
       {error && <div style={{ color: "red", marginTop: "1em" }}>{error}</div>}
+
       {videoStatus.running && videoStatus.mode === "livestream" && (
         <div style={{ marginTop: "1em" }}>
           <img
             src={`${API_URL}/video_feed?${Date.now()}`}
             alt="Video Stream"
-            style={{ width: "320px", border: "2px solid #333" }}
+            style={{ width: "75%", border: "2px solid #333" }}
           />
         </div>
       )}
