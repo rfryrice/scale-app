@@ -1,0 +1,32 @@
+.seven-segment-display {
+  display: flex;
+  gap: 8px;
+}
+
+.seven-segment-digit {
+  position: relative;
+  width: 28px;
+  height: 48px;
+}
+
+.segment {
+  position: absolute;
+  background: #333;
+  opacity: 0.1;
+  transition: opacity 0.2s;
+}
+
+/* Segment positions */
+.segment.a { top: 0; left: 4px; width: 20px; height: 6px; }
+.segment.b { top: 4px; right: 0; width: 6px; height: 20px; }
+.segment.c { bottom: 4px; right: 0; width: 6px; height: 20px; }
+.segment.d { bottom: 0; left: 4px; width: 20px; height: 6px; }
+.segment.e { bottom: 4px; left: 0; width: 6px; height: 20px; }
+.segment.f { top: 4px; left: 0; width: 6px; height: 20px; }
+.segment.g { top: 21px; left: 4px; width: 20px; height: 6px; }
+
+.segment.on {
+  opacity: 1;
+  background: #f00;
+  box-shadow: 0 0 6px 2px #f00a;
+}
