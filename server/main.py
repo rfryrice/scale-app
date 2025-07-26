@@ -336,9 +336,11 @@ def video_feed():
 @app.route('/video-file')
 def video_file():
     file = request.args.get('file')
+    print(f"[DEBUG] /video-file requested filename: {file}")
     if not file or not file.endswith('.avi'):
         return jsonify({'error': 'Invalid file'}), 400
     video_path = os.path.join(DATA_DIR, file)
+    print(f"[DEBUG] /video-file resolved video_path: {video_path}")
     if not os.path.isfile(video_path):
         return jsonify({'error': 'File not found'}), 404
 
