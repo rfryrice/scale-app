@@ -35,7 +35,7 @@ function Dashboard({ selectedFile }) {
   const [filename, setFilename] = useState(selectedFile);
 
   useEffect(() => {
-    if (!selectedFile) return;
+    if (!selectedFile || !selectedFile.endsWith('.csv')) return;
     setFilename(selectedFile);
     axios
       .get(`${API_URL}/dashboard?file=${encodeURIComponent(selectedFile)}`)
