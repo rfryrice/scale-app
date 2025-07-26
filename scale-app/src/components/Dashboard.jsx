@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { LineChart } from '@mui/x-charts/LineChart';
+import { Typography } from '@mui/material';
 
 // Display graph data
 
@@ -51,7 +52,7 @@ const maData = movingAverage(yData, 5)
 
   return (
     <div style={{ minWidth: 600}}>
-      <h2>Data Plot</h2>
+      <Typography variant="h2" gutterBottom>Data Plot</Typography>
       {filename && (
         <div style={{ marginBottom: "1rem" }}>
           File: <strong>{filename}</strong>

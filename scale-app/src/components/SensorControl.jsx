@@ -6,6 +6,7 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import SevenSegmentDisplay from "./SevenSegmentDisplay";
 import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -160,7 +161,7 @@ function SensorControl({ onDataChanged }) {
   // Render calibration flow UI
   return (
     <div style={{ minWidth: 300 }}>
-      <h2>Sensor Control</h2>
+      <Typography variant="h2" gutterBottom>Sensor Control</Typography>
       {sensorRunning && (
         <div style={{ marginBottom: 16 }}>
           <SevenSegmentDisplay value={sensorValue} />

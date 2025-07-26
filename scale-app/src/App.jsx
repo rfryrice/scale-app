@@ -5,7 +5,8 @@ import {
   ThemeProvider,
   Card,
   CardContent,
-  Box
+  Box,
+  Typography
 } from "@mui/material";
 import Grid from "@mui/material/Grid"; // Use Grid v2
 import reactLogo from "./assets/react.svg";
@@ -144,18 +145,17 @@ function App() {
               <a href="https://vite.dev" target="_blank">
                 <img src={viteLogo} className="logo" alt="Vite logo" />
               </a>
-              <h1>Scale-App</h1>
+              <Typography variant="h1" className="header-title"> Scale App</Typography>
               <a href="https://react.dev" target="_blank">
                 <img src={reactLogo} className="logo react" alt="React logo" />
               </a>
             </Box>
             
-            <p>Interface with scale and livestream using this app</p>
+            <Typography variant="body1">Interface with scale and livestream using this app</Typography>
 
             <div className="dashboard-layout">
               {isLoggedIn ? (
                 <>
-                  <p>Welcome, {username}!</p>
                   <Grid container spacing={2}>
                     {/* Sidebar: ListData spans 2 rows on md+ */}
                     <Grid size={{ xs: 12, md: 3 }}>

@@ -135,16 +135,27 @@ def delete_contact(user_id):
 
     return jsonify({"message": "User deleted!"}), 200
 
-
-@app.route("/list-csv", methods=["GET"])
-def list_csv():
+# Called from ListData component
+@app.route("/list-files", methods=["GET"])
+def list_files():
     # Ensure the data directory exists
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
 
-    # List only .csv files
+    # List .csv files in the data directory
     csv_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.csv')]
-    return jsonify({"files": csv_files})
+
+    # List .avi files in the data/videos directory
+    videos_dir = os.path.join(DATA_DIR, "videos")
+    if not os.path.exists(videos_dir):
+        os.makedirs(videos_dir)
+    avi_files = [os.path.join("videos", f) for f in os.listdir(videos_dir) if f.endswith('.avi')]
+
+    # Return both lists, with relative paths
+    return jsonify({
+        "csv_files": csv_files,
+        "avi_files": avi_files
+   })
 
 
 @app.route("/dashboard", methods=["GET"])

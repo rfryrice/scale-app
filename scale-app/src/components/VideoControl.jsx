@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
+import { Typography } from "@mui/material";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -149,7 +150,7 @@ function VideoControl() {
   return (
     <div style={{ minWidth: 350 }}>
       <Tooltip title="Control livestream and recording from here">
-        <h2>Video Control</h2>
+        <Typography variant="h2" gutterBottom>Video Control</Typography>
       </Tooltip>
       <div>
         <Button
