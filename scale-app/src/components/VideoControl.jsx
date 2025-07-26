@@ -9,8 +9,8 @@ const API_URL = import.meta.env.VITE_API_URL;
 function VideoControl({ selectedFile }) {
   // Helper: is the selected file a video?
   const isVideoFile = selectedFile && selectedFile.endsWith('.avi');
-  // Compute video URL if selected
-  const videoUrl = isVideoFile ? `${API_URL}/data/${selectedFile}` : null;
+  // Compute video URL if selected, using new backend route
+  const videoUrl = isVideoFile ? `${API_URL}/video-file?file=${encodeURIComponent(selectedFile)}` : null;
   const [videoStatus, setVideoStatus] = useState({
     running: false,
     mode: null,

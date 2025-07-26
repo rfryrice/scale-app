@@ -58,36 +58,40 @@ const maData = movingAverage(yData, 5)
           File: <strong>{filename}</strong>
         </div>
       )}
-      {xData.length > 0 ? (
-        <LineChart
-          xAxis={[
-            {
-              data: xData,
-              label: "Timestamp",
-              scaleType: "time",
-              valueFormatter: (date) => {
-                if (!(date instanceof Date) || isNaN(date)) return "";
-                return date.toLocaleString();
+      {filename && filename.endsWith('.csv') ? (
+        xData.length > 0 ? (
+          <LineChart
+            xAxis={[
+              {
+                data: xData,
+                label: "Timestamp",
+                scaleType: "time",
+                valueFormatter: (date) => {
+                  if (!(date instanceof Date) || isNaN(date)) return "";
+                  return date.toLocaleString();
+                },
               },
-            },
-          ]}
-          series={[
-            {
-              data: yData,
-              label: "Value",
-              color: "#4254fb"
-            },
-            {
-              data: maData,
-              label: "5-point Moving Avg",
-              color: "#ff9100",
-            },
-          ]}
-          width={600}
-          height={350}
-        />
+            ]}
+            series={[
+              {
+                data: yData,
+                label: "Value",
+                color: "#4254fb"
+              },
+              {
+                data: maData,
+                label: "5-point Moving Avg",
+                color: "#ff9100",
+              },
+            ]}
+            width={600}
+            height={350}
+          />
+        ) : (
+          <div>No data available for this file.</div>
+        )
       ) : (
-        <div>No data available for this file.</div>
+        <div>Select a CSV file to view the data plot.</div>
       )}
       <div style={{ marginTop: "1em", fontSize: "0.9em", color: "#888" }}>
         Purple: Original Value &nbsp;|&nbsp; Orange: 5-point Moving Average

@@ -1,4 +1,4 @@
-from flask import request, jsonify, Response
+from flask import request, jsonify, send_file, Response
 from config import app, db
 from models import Contact, User
 from video_streamer import VideoStreamer, CameraBusyException
@@ -300,6 +300,8 @@ def stop_video():
         video_mode = None
         video_filename = None
     return jsonify({"message": f"{stopped_mode.capitalize()} stopped.", "mode": stopped_mode, "filename": stopped_filename}), 200
+
+
 @app.route('/video/status', methods=['GET'])
 def video_status():
     running = video_streamer is not None
@@ -329,6 +331,17 @@ def video_feed():
         except Exception:
             pass
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/video-file')
+def video_file():
+    file = request.args.get('file')
+    if not file or not file.endswith('.avi'):
+        return jsonify({'error': 'Invalid file'}), 400
+    # Only allow files in the videos directory
+    video_path = os.path.join(DATA_DIR, file)
+    if not os.path.isfile(video_path):
+        return jsonify({'error': 'File not found'}), 404
+    return send_file(video_path, mimetype='video/x-msvideo')
 
 if __name__ == "__main__":
     with app.app_context():
