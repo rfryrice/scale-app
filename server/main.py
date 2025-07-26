@@ -348,7 +348,7 @@ def video_file():
         # No Range header, send the whole file
         return send_file(video_path, mimetype='video/x-msvideo')
 
-    # Parse Range header
+    # Parse Range header for exact byte range
     byte1, byte2 = 0, None
     m = re.search(r'bytes=(\d+)-(\d*)', range_header)
     if m:
@@ -356,15 +356,16 @@ def video_file():
         byte1 = int(g[0])
         if g[1]:
             byte2 = int(g[1])
-
-    # Serve at least a quarter of the file per request, unless client asks for less
-    min_chunk = max(size // 4, 1)
-    if byte2 is None or byte2 < byte1:
-        # If no end specified, serve at least a quarter, but not past EOF
-        byte2 = min(byte1 + min_chunk - 1, size - 1)
+        else:
+            byte2 = size - 1
     else:
-        # If end specified, don't serve more than a quarter at once
-        byte2 = min(byte2, byte1 + min_chunk - 1, size - 1)
+        # Malformed Range header, ignore and send whole file
+        return send_file(video_path, mimetype='video/x-msvideo')
+
+    # Clamp values to file size
+    byte2 = min(byte2, size - 1)
+    if byte1 > byte2:
+        return Response(status=416)  # Requested Range Not Satisfiable
 
     length = byte2 - byte1 + 1
     with open(video_path, 'rb') as f:
