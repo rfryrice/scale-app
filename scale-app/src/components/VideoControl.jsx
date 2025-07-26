@@ -157,17 +157,24 @@ function VideoControl({ selectedFile }) {
   };
 
   return (
-    <div style={{ minWidth: 350 }}>
-      {/* Toggle button for video drawer */}
+    <div style={{ minWidth: 350, position: 'relative' }}>
+      {/* Toggle icon button for video drawer - absolute top left */}
       {isVideoFile && (
-        <Button
-          variant="contained"
-          color={showVideo ? "secondary" : "primary"}
+        <IconButton
           onClick={() => setShowVideo((v) => !v)}
-          sx={{ mb: 2 }}
+          color={showVideo ? "secondary" : "primary"}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            zIndex: 10,
+            background: '#fff',
+            boxShadow: 1,
+            '&:hover': { background: '#f0f0f0' },
+          }}
         >
-          {showVideo ? "Hide Video Preview" : "Show Video Preview"}
-        </Button>
+          {showVideo ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+        </IconButton>
       )}
       <div
         style={{
