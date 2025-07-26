@@ -7,6 +7,7 @@ import {
   ListItemButton,
   ListItemText,
   Typography,
+  Button,
 } from "@mui/material";
 import axios from "axios";
 
@@ -43,24 +44,40 @@ export default function ListData({ onFileSelect, selectedFile }) {
         {files.map((file) => {
           // Determine download URL
           let downloadUrl = "";
+          let displayName = file;
           if (tab === 0) {
             // CSV files are in the data directory
             downloadUrl = `${API_URL}/data/${file}`;
           } else {
             // AVI files are in the data/videos directory
             downloadUrl = `${API_URL}/data/${file}`;
+            // Remove 'videos/' prefix for display
+            if (file.startsWith("videos/")) {
+              displayName = file.replace(/^videos\//, "");
+            }
           }
           return (
-            <ListItem key={file} disablePadding secondaryAction={
-              <a href={downloadUrl} download style={{ textDecoration: "none" }}>
-                <button style={{ marginLeft: 8 }}>Download</button>
-              </a>
-            }>
+            <ListItem key={file} disablePadding
+              secondaryAction={
+                selectedFile === file ? (
+                  <a href={downloadUrl} download style={{ textDecoration: "none" }}>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      size="small"
+                      sx={{ ml: 1 }}
+                    >
+                      Download
+                    </Button>
+                  </a>
+                ) : null
+              }
+            >
               <ListItemButton
                 selected={selectedFile === file}
                 onClick={() => onFileSelect(file)}
               >
-                <ListItemText primary={file} />
+                <ListItemText primary={displayName} />
               </ListItemButton>
             </ListItem>
           );

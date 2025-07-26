@@ -2,11 +2,15 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
-import { Typography } from "@mui/material";
+import { Typography, CardMedia } from "@mui/material";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-function VideoControl() {
+function VideoControl({ selectedFile }) {
+  // Helper: is the selected file a video?
+  const isVideoFile = selectedFile && selectedFile.endsWith('.avi');
+  // Compute video URL if selected
+  const videoUrl = isVideoFile ? `${API_URL}/data/${selectedFile}` : null;
   const [videoStatus, setVideoStatus] = useState({
     running: false,
     mode: null,
@@ -179,6 +183,20 @@ function VideoControl() {
           Stop
         </Button>
       </div>
+      {/* Video playback for selected video file */}
+      {isVideoFile && (
+        <div style={{ marginTop: "1.5em" }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Video Preview: {selectedFile.replace(/^videos\//, "")}
+          </Typography>
+          <CardMedia
+            component="video"
+            src={videoUrl}
+            controls
+            style={{ width: "100%", maxWidth: 480, border: "2px solid #333" }}
+          />
+        </div>
+      )}
       {videoStatus.mode === "record" && videoStatus.filename && (
         <div style={{ color: "green", marginTop: "1em", display: "flex", alignItems: "center", gap: "1em" }}>
           Recording to file: <strong>{videoStatus.filename}</strong> 
