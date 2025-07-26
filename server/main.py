@@ -13,6 +13,7 @@ import os
 import time
 import threading
 from thread_report import report_gpiochip0_users
+import re
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -337,11 +338,38 @@ def video_file():
     file = request.args.get('file')
     if not file or not file.endswith('.avi'):
         return jsonify({'error': 'Invalid file'}), 400
-    # Only allow files in the videos directory
     video_path = os.path.join(DATA_DIR, file)
     if not os.path.isfile(video_path):
         return jsonify({'error': 'File not found'}), 404
-    return send_file(video_path, mimetype='video/x-msvideo')
+
+    range_header = request.headers.get('Range', None)
+    if not range_header:
+        # No Range header, send the whole file
+        return send_file(video_path, mimetype='video/x-msvideo')
+
+    size = os.path.getsize(video_path)
+    byte1, byte2 = 0, None
+
+    m = re.search(r'bytes=(\\d+)-(\\d*)', range_header)
+    if m:
+        g = m.groups()
+        byte1 = int(g[0])
+        if g[1]:
+            byte2 = int(g[1])
+
+    length = size - byte1
+    if byte2 is not None:
+        length = byte2 - byte1 + 1
+
+    with open(video_path, 'rb') as f:
+        f.seek(byte1)
+        data = f.read(length)
+
+    rv = Response(data, 206, mimetype='video/x-msvideo', direct_passthrough=True)
+    rv.headers.add('Content-Range', f'bytes {byte1}-{byte1 + length - 1}/{size}')
+    rv.headers.add('Accept-Ranges', 'bytes')
+    rv.headers.add('Content-Length', str(length))
+    return rv
 
 if __name__ == "__main__":
     with app.app_context():

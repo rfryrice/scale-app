@@ -73,3 +73,13 @@
 .header-row h1 {
   margin: 0;
 }
+
+.video-drawer {
+  min-width: 0;
+  max-width: 480px;
+  overflow: hidden;
+  transition: width 0.4s cubic-bezier(.4,2,.6,1);
+  background: "#111";
+  border-radius: 8px;
+  display: "flex";
+}
