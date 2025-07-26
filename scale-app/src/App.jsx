@@ -186,7 +186,7 @@ function App() {
                             </CardContent>
                           </Card>
                         </Grid>
-                        <Grid size={{ xs: 12, md: 8 }}>
+                        <Grid size={{ xs: 12, md: 12 }}>
                           <Card sx={{ mb: 2 }}>
                               <VideoControl selectedFile={selectedFile} /> {/* CardMedia and CardContent inside component */}
                           </Card>
