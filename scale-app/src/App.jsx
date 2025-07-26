@@ -188,9 +188,7 @@ function App() {
                         </Grid>
                         <Grid size={{ xs: 12, md: 8 }}>
                           <Card sx={{ mb: 2 }}>
-                            <CardContent>
-                              <VideoControl />
-                            </CardContent>
+                              <VideoControl /> {/* CardMedia and CardContent inside component */}
                           </Card>
                         </Grid>
                       </Grid>

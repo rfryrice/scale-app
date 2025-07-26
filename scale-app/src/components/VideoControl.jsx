@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
-import { Typography, CardMedia } from "@mui/material";
+import { Typography, CardMedia, CardContent } from "@mui/material";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -153,67 +153,70 @@ function VideoControl({ selectedFile }) {
 
   return (
     <div style={{ minWidth: 350 }}>
-      <Tooltip title="Control livestream and recording from here">
-        <Typography variant="h2" gutterBottom>Video Control</Typography>
-      </Tooltip>
-      <div>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => handleStart("livestream")}
-          disabled={videoStatus.running}
-          sx={{ mr: 2 }}
-        >
-          Start Livestream
-        </Button>
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => handleStart("record")}
-          disabled={videoStatus.running}
-          sx={{ mr: 2 }}
-        >
-          Start Recording
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleStop}
-          disabled={!videoStatus.running}
-        >
-          Stop
-        </Button>
-      </div>
-      {/* Video playback for selected video file */}
+        {isVideoFile && (
+          <div style={{ marginTop: "1.5em" }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Video Preview: {selectedFile.replace(/^videos\//, "")}
+            </Typography>
+          </div>
+        )}
       {isVideoFile && (
-        <div style={{ marginTop: "1.5em" }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Video Preview: {selectedFile.replace(/^videos\//, "")}
-          </Typography>
-          <CardMedia
-            component="video"
-            src={videoUrl}
-            controls
-            style={{ width: "100%", maxWidth: 480, border: "2px solid #333" }}
-          />
-        </div>
+        <CardMedia
+          component="video"
+          src={videoUrl}
+          controls
+          style={{ width: "100%", maxWidth: 480, border: "2px solid #333", margin: "0 auto", display: "block" }}
+        />
       )}
-      {videoStatus.mode === "record" && videoStatus.filename && (
-        <div style={{ color: "green", marginTop: "1em", display: "flex", alignItems: "center", gap: "1em" }}>
-          Recording to file: <strong>{videoStatus.filename}</strong> 
-          Runtime: <span style={{ fontWeight: "bold" }}>{recordRuntime}</span>
+      <CardContent>
+        <Tooltip title="Control livestream and recording from here">
+          <Typography variant="h2" gutterBottom>Video Control</Typography>
+        </Tooltip>
+        <div>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleStart("livestream")}
+            disabled={videoStatus.running}
+            sx={{ mr: 2 }}
+          >
+            Start Livestream
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => handleStart("record")}
+            disabled={videoStatus.running}
+            sx={{ mr: 2 }}
+          >
+            Start Recording
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleStop}
+            disabled={!videoStatus.running}
+          >
+            Stop
+          </Button>
         </div>
-      )}
-      {error && <div style={{ color: "red", marginTop: "1em" }}>{error}</div>}
+        {videoStatus.mode === "record" && videoStatus.filename && (
+          <div style={{ color: "green", marginTop: "1em", display: "flex", alignItems: "center", gap: "1em" }}>
+            Recording to file: <strong>{videoStatus.filename}</strong> 
+            Runtime: <span style={{ fontWeight: "bold" }}>{recordRuntime}</span>
+          </div>
+        )}
+        {error && <div style={{ color: "red", marginTop: "1em" }}>{error}</div>}
 
-      {videoStatus.running && videoStatus.mode === "livestream" && (
-        <div style={{ marginTop: "1em" }}>
-          <img
-            src={`${API_URL}/video_feed?${Date.now()}`}
-            alt="Video Stream"
-            style={{ width: "75%", border: "2px solid #333" }}
-          />
-        </div>
-      )}
+        {videoStatus.running && videoStatus.mode === "livestream" && (
+          <div style={{ marginTop: "1em" }}>
+            <img
+              src={`${API_URL}/video_feed?${Date.now()}`}
+              alt="Video Stream"
+              style={{ width: "75%", border: "2px solid #333" }}
+            />
+          </div>
+        )}
+      </CardContent>
     </div>
   );
 }
