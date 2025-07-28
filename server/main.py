@@ -15,6 +15,7 @@ import threading
 from thread_report import report_gpiochip0_users
 import re
 from system_monitor import system_monitor
+from generate_dash import generate_dash
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -80,8 +81,6 @@ def login():
     else:
         return jsonify({"message": "Invalid username or password"}), 401
 
-
-
 @app.route("/contacts", methods=["GET"])
 def get_contacts():
     contacts = Contact.query.all()
@@ -108,7 +107,6 @@ def create_contact():
     
     return jsonify({"message": "User created!"}), 201
 
-
 @app.route("/update_contact/<int:user_id>", methods=["PATCH"])
 def update_contact(user_id):
     contact = Contact.query.get(user_id)
@@ -123,7 +121,6 @@ def update_contact(user_id):
     db.session.commit()
 
     return jsonify({"message": "User updated!"}), 200
-
 
 @app.route("/delete_contact/<int:user_id>", methods=["DELETE"])
 def delete_contact(user_id):
@@ -163,7 +160,6 @@ def list_files():
         "csv_files": csv_files,
         "mp4_files": mp4_files
    })
-
 
 @app.route("/dashboard", methods=["GET"])
 def dashboard():
@@ -306,6 +302,21 @@ def stop_video():
         stopped_filename = video_filename
         video_mode = None
         video_filename = None
+    # Generate DASH files if a recording was stopped
+    if stopped_mode == 'record' and stopped_filename:
+        try:
+            # Try both data/videos/filename and data/filename for compatibility
+            mp4_path = os.path.join(DATA_DIR, 'videos', stopped_filename)
+            if not os.path.isfile(mp4_path):
+                mp4_path = os.path.join(DATA_DIR, stopped_filename)
+            print(f"[DEBUG] Generating DASH for: {mp4_path}")
+            dash_dir = generate_dash(mp4_path)
+            if dash_dir:
+                print(f"[DEBUG] DASH files generated at: {dash_dir}")
+            else:
+                print(f"[ERROR] Failed to generate DASH files for: {mp4_path}")
+        except Exception as e:
+            print(f"[ERROR] Exception during DASH generation: {e}")
     return jsonify({"message": f"{stopped_mode.capitalize()} stopped.", "mode": stopped_mode, "filename": stopped_filename}), 200
 
 
