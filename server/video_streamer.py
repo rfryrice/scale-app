@@ -53,7 +53,7 @@ class VideoStreamer:
             ret, jpeg = cv2.imencode('.jpg', self.frame)
             return jpeg.tobytes() if ret else None
 
-    def start_recording(self, filename="output.avi"):
+    def start_recording(self, filename="output.mp4"):
         print(f"[DEBUG] start_recording called. self.recording={getattr(self, 'recording', None)} | thread alive: {self.thread.is_alive()}")
         if not self.recording:
             with self.lock:
@@ -66,7 +66,7 @@ class VideoStreamer:
                     h, w = self.frame.shape[:2]
                 else:
                     h, w = 480, 640  # default
-                fourcc = cv2.VideoWriter_fourcc(*'XVID')
+                fourcc = cv2.VideoWriter_fourcc(*'mp4v')
                 self.writer = cv2.VideoWriter(filename, fourcc, 20.0, (w, h))
             self.recording = True
         print(f"[DEBUG] start_recording finished. self.recording={getattr(self, 'recording', None)} | thread alive: {self.thread.is_alive()}")
@@ -87,4 +87,4 @@ class VideoStreamer:
         self.thread.join(timeout=3)
         print(f"[DEBUG] release finished. Thread alive after: {self.thread.is_alive()}")
         self.picam2.stop()
-        self.picam2.close() 
+        self.picam2.close()
