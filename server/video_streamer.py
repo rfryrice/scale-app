@@ -57,17 +57,27 @@ class VideoStreamer:
         print(f"[DEBUG] start_recording called. self.recording={getattr(self, 'recording', None)} | thread alive: {self.thread.is_alive()}")
         if not self.recording:
             with self.lock:
-                # Ensure the directory exists
                 video_dir = os.path.join(os.path.dirname(__file__), "data", "videos")
                 os.makedirs(video_dir, exist_ok=True)
-                # Prepend the directory to the filename
                 filename = os.path.join(video_dir, filename)
+                # Use libcamera-vid for H.264 hardware encoding
+                self._recording_proc = None
+                h, w = (480, 640)
                 if self.frame is not None:
                     h, w = self.frame.shape[:2]
-                else:
-                    h, w = 480, 640  # default
-                fourcc = cv2.VideoWriter_fourcc(*'avc1')
-                self.writer = cv2.VideoWriter(filename, fourcc, 20.0, (w, h))
+                # libcamera-vid expects width x height
+                cmd = [
+                    "libcamera-vid",
+                    "-o", filename,
+                    "-t", "0",  # unlimited duration, will be killed on stop
+                    "--width", str(w),
+                    "--height", str(h),
+                    "--codec", "h264",
+                    "--framerate", "20"
+                ]
+                print(f"[DEBUG] Starting libcamera-vid: {' '.join(cmd)}")
+                import subprocess
+                self._recording_proc = subprocess.Popen(cmd)
             self.recording = True
         print(f"[DEBUG] start_recording finished. self.recording={getattr(self, 'recording', None)} | thread alive: {self.thread.is_alive()}")
 
@@ -75,9 +85,15 @@ class VideoStreamer:
         print(f"[DEBUG] stop_recording called. self.recording={self.recording} | thread alive: {self.thread.is_alive()}")
         if self.recording:
             self.recording = False
-            if self.writer:
-                self.writer.release()
-                self.writer = None
+            # Stop libcamera-vid process if running
+            if hasattr(self, '_recording_proc') and self._recording_proc:
+                print("[DEBUG] Terminating libcamera-vid process...")
+                self._recording_proc.terminate()
+                try:
+                    self._recording_proc.wait(timeout=5)
+                except Exception:
+                    self._recording_proc.kill()
+                self._recording_proc = None
         print(f"[DEBUG] After stop_recording: self.recording={self.recording} | thread alive: {self.thread.is_alive()}")
 
     def release(self):
