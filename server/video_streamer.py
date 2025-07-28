@@ -66,7 +66,7 @@ class VideoStreamer:
                     h, w = self.frame.shape[:2]
                 else:
                     h, w = 480, 640  # default
-                fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                fourcc = cv2.VideoWriter_fourcc(*'H264')
                 self.writer = cv2.VideoWriter(filename, fourcc, 20.0, (w, h))
             self.recording = True
         print(f"[DEBUG] start_recording finished. self.recording={getattr(self, 'recording', None)} | thread alive: {self.thread.is_alive()}")
