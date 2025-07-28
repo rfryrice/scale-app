@@ -23,7 +23,7 @@ export default function ListData({ onFileSelect, selectedFile }) {
       if (tab === 0) {
         setFiles(res.data.csv_files || []);
       } else {
-        setFiles(res.data.avi_files || []);
+        setFiles(res.data.mp4_files || []);
       }
     };
     fetchFiles();
@@ -38,7 +38,7 @@ export default function ListData({ onFileSelect, selectedFile }) {
       </Typography>
       <Tabs value={tab} onChange={handleTabChange} centered>
         <Tab label="Data (.csv)" />
-        <Tab label="Videos (.avi)" />
+        <Tab label="Videos (.mp4)" />
       </Tabs>
       <List>
         {files.map((file) => {
@@ -49,7 +49,7 @@ export default function ListData({ onFileSelect, selectedFile }) {
             // CSV files are in the data directory
             downloadUrl = `${API_URL}/data/${file}`;
           } else {
-            // AVI files are in the data/videos directory
+            // MP4 files are in the data/videos directory
             downloadUrl = `${API_URL}/data/${file}`;
             // Remove 'videos/' prefix for display
             if (file.startsWith("videos/")) {
