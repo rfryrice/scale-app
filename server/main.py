@@ -374,7 +374,7 @@ def video_file():
         f.seek(byte1)
         data = f.read(length)
 
-    rv = Response(data, 206, mimetype='video/x-msvideo', direct_passthrough=True)
+    rv = Response(data, 206, mimetype='video/mp4', direct_passthrough=True)
     rv.headers.add('Content-Range', f'bytes {byte1}-{byte2}/{size}')
     rv.headers.add('Accept-Ranges', 'bytes')
     rv.headers.add('Content-Length', str(length))
