@@ -1,6 +1,6 @@
 import os
 import subprocess
-
+MP4BOX_PATH = "/home/pi/Downloads/gpac/bin/gcc/MP4Box"  # Update this to your actual path
 def generate_dash(mp4_path, segment_duration=4000):
     """
     Generate DASH (MPD + segments) for the given MP4 file using MP4Box.
@@ -18,7 +18,7 @@ def generate_dash(mp4_path, segment_duration=4000):
     manifest_path = os.path.join(dash_dir, "manifest.mpd")
     # MP4Box command
     cmd = [
-        "MP4Box",
+        MP4BOX_PATH,
         "-dash", str(segment_duration),
         "-frag", str(segment_duration),
         "-rap",
