@@ -1,4 +1,5 @@
 import threading
+import subprocess
 import time
 import numpy as np
 from picamera2 import Picamera2, Preview
@@ -60,14 +61,14 @@ class VideoStreamer:
                 video_dir = os.path.join(os.path.dirname(__file__), "data", "videos")
                 os.makedirs(video_dir, exist_ok=True)
                 filename = os.path.join(video_dir, filename)
-                # Use libcamera-vid for H.264 hardware encoding
+                # Use rpicam-vid for H.264 hardware encoding
                 self._recording_proc = None
                 h, w = (480, 640)
                 if self.frame is not None:
                     h, w = self.frame.shape[:2]
-                # libcamera-vid expects width x height
+                # rpicam-vid expects width x height
                 cmd = [
-                    "libcamera-vid",
+                    "rpicam-vid",
                     "-o", filename,
                     "-t", "0",  # unlimited duration, will be killed on stop
                     "--width", str(w),
@@ -75,8 +76,8 @@ class VideoStreamer:
                     "--codec", "h264",
                     "--framerate", "20"
                 ]
-                print(f"[DEBUG] Starting libcamera-vid: {' '.join(cmd)}")
-                import subprocess
+                print(f"[DEBUG] Starting rpicam-vid: {' '.join(cmd)}")
+                
                 self._recording_proc = subprocess.Popen(cmd)
             self.recording = True
         print(f"[DEBUG] start_recording finished. self.recording={getattr(self, 'recording', None)} | thread alive: {self.thread.is_alive()}")
@@ -85,9 +86,9 @@ class VideoStreamer:
         print(f"[DEBUG] stop_recording called. self.recording={self.recording} | thread alive: {self.thread.is_alive()}")
         if self.recording:
             self.recording = False
-            # Stop libcamera-vid process if running
+            # Stop rpicam-vid process if running
             if hasattr(self, '_recording_proc') and self._recording_proc:
-                print("[DEBUG] Terminating libcamera-vid process...")
+                print("[DEBUG] Terminating rpicam-vid process...")
                 self._recording_proc.terminate()
                 try:
                     self._recording_proc.wait(timeout=5)
