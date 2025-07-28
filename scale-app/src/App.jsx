@@ -20,6 +20,7 @@ import VideoControl from "./components/VideoControl";
 import TopBar from "./scenes/global/TopBar";
 import PersistentDrawerLeft from "./scenes/global/Drawer";
 import SensorControl from "./components/SensorControl";
+import SystemMonitor from "./components/SystemMonitor";
 
 function App() {
   const [theme, colorMode] = useMode();
@@ -189,6 +190,13 @@ function App() {
                         <Grid size={{ xs: 12, md: 12 }}>
                           <Card sx={{ mb: 2 }}>
                               <VideoControl selectedFile={selectedFile} /> {/* CardMedia and CardContent inside component */}
+                          </Card>
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 12 }}>
+                          <Card sx={{ mb: 2 }}>
+                            <CardContent>
+                              <SystemMonitor />
+                            </CardContent>
                           </Card>
                         </Grid>
                       </Grid>

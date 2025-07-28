@@ -1,4 +1,4 @@
-from flask import request, jsonify, send_file, Response
+from flask import request, jsonify, send_file, Response, send_from_directory
 from config import app, db
 from models import Contact, User
 from video_streamer import VideoStreamer, CameraBusyException
@@ -14,6 +14,7 @@ import time
 import threading
 from thread_report import report_gpiochip0_users
 import re
+from system_monitor import system_monitor
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -135,6 +136,11 @@ def delete_contact(user_id):
     db.session.commit()
 
     return jsonify({"message": "User deleted!"}), 200
+
+# System status endpoint
+@app.route('/system-status', methods=['GET'])
+def system_status():
+    return jsonify(system_monitor.get_data()), 200
 
 # Called from ListData component
 @app.route("/list-files", methods=["GET"])
@@ -379,6 +385,43 @@ def video_file():
     rv.headers.add('Accept-Ranges', 'bytes')
     rv.headers.add('Content-Length', str(length))
     return rv
+
+# DASH video streaming endpoints
+@app.route('/video/dash/manifest')
+def dash_manifest():
+    """
+    Serve the DASH MPD manifest for a given video file.
+    Expects ?file=<filename.mp4> (must exist in data/videos/)
+    The manifest is expected at data/videos/<basename>_dash/manifest.mpd
+    """
+    file = request.args.get('file')
+    if not file or not file.endswith('.mp4'):
+        return jsonify({'error': 'Invalid file'}), 400
+    base = os.path.splitext(file)[0]
+    dash_dir = os.path.join(DATA_DIR, 'videos', f'{base}_dash')
+    manifest_path = os.path.join(dash_dir, 'manifest.mpd')
+    if not os.path.isfile(manifest_path):
+        return jsonify({'error': 'DASH manifest not found. Please generate DASH files for this video.'}), 404
+    return send_from_directory(dash_dir, 'manifest.mpd', mimetype='application/dash+xml')
+
+
+@app.route('/video/dash/segment/<video>/<segment>')
+def dash_segment(video, segment):
+    """
+    Serve a DASH segment file for a given video.
+    <video> is the base name (without .mp4), <segment> is the segment filename (e.g. 'init.mp4', 'chunk1.m4s')
+    Segments are expected at data/videos/<video>_dash/<segment>
+    """
+    dash_dir = os.path.join(DATA_DIR, 'videos', f'{video}_dash')
+    segment_path = os.path.join(dash_dir, segment)
+    if not os.path.isfile(segment_path):
+        return jsonify({'error': 'Segment not found'}), 404
+    # Guess mimetype based on extension
+    if segment.endswith('.mp4') or segment.endswith('.m4s'):
+        mimetype = 'video/mp4'
+    else:
+        mimetype = 'application/octet-stream'
+    return send_from_directory(dash_dir, segment, mimetype=mimetype)
 
 if __name__ == "__main__":
     with app.app_context():

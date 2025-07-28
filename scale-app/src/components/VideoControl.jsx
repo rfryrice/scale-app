@@ -24,8 +24,47 @@ function VideoControl({ selectedFile }) {
   const runtimeIntervalRef = useRef(null);
   // Helper: is the selected file a video?
   const isVideoFile = selectedFile && selectedFile.endsWith('.mp4');
-  // Compute video URL if selected, using new backend route
+  // DASH manifest URL for selected video
+  const dashManifestUrl = isVideoFile ? `${API_URL}/video/dash/manifest?file=${encodeURIComponent(selectedFile.replace(/^videos\//, ""))}` : null;
+  // Fallback direct video URL
   const videoUrl = isVideoFile ? `${API_URL}/video-file?file=${encodeURIComponent(selectedFile)}` : null;
+  // Ref for dash.js video element
+  const dashVideoRef = useRef(null);
+  // Dynamically load dash.js and attach to video element if DASH manifest is available
+  useEffect(() => {
+    if (!isVideoFile || !showVideo) return;
+    if (!dashManifestUrl) return;
+    let player = null;
+    let script = null;
+    // Only attach dash.js if the drawer is open
+    if (showVideo && dashVideoRef.current) {
+      // Dynamically load dash.js if not already loaded
+      if (!window.dashjs) {
+        script = document.createElement('script');
+        script.src = 'https://cdn.dashjs.org/latest/dash.all.min.js';
+        script.async = true;
+        script.onload = () => {
+          if (window.dashjs && dashVideoRef.current) {
+            player = window.dashjs.MediaPlayer().create();
+            player.initialize(dashVideoRef.current, dashManifestUrl, false);
+          }
+        };
+        document.body.appendChild(script);
+      } else {
+        player = window.dashjs.MediaPlayer().create();
+        player.initialize(dashVideoRef.current, dashManifestUrl, false);
+      }
+    }
+    return () => {
+      if (player) {
+        player.reset();
+      }
+      if (script) {
+        document.body.removeChild(script);
+      }
+    };
+    // Only rerun if drawer, file, or manifest changes
+  }, [showVideo, dashManifestUrl, isVideoFile, selectedFile]);
   // State for video drawer
   const [showVideo, setShowVideo] = useState(false);
 
@@ -186,33 +225,22 @@ function VideoControl({ selectedFile }) {
         }}
       >
         {/* Animated CardMedia drawer */}
-        {isVideoFile && (
-          <div className="video-drawer"
-            style={{
-              width: showVideo ? 320 : 0,
-              boxShadow: showVideo ? "2px 0 8px -4px #888" : "none",
-              marginRight: showVideo ? 24 : 0,
-              marginLeft: 0,
-              height: showVideo ? 240 : 0,
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <CardMedia
-              component="video"
-              src={videoUrl}
-              controls
-              style={{ width: showVideo ? 320 : 0, height: showVideo ? 240 : 0, border: "2px solid #333", borderRadius: 8, background: "#000", transition: "width 0.4s, height 0.4s" }}
-            />
-            {showVideo && (
-              <Typography variant="subtitle1" gutterBottom sx={{ color: '#fff', mt: 1 }}>
-                Video Preview: {selectedFile.replace(/^videos\//, "")}
-              </Typography>
-            )}
-          </div>
-        )}
+        {/* Video preview moved into CardContent below */}
         <CardContent style={{ flex: 1, minWidth: 0 }}>
+          {/* DASH video player and label inside CardContent */}
+          {isVideoFile && showVideo && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 16 }}>
+              <video
+                ref={dashVideoRef}
+                controls
+                style={{ width: 320, height: 240, border: "2px solid #333", borderRadius: 8, background: "#000", transition: "width 0.4s, height 0.4s" }}
+                poster=""
+              />
+              <Typography variant="subtitle1" gutterBottom sx={{ color: '#333', mt: 1 }}>
+                Video Preview (DASH): {selectedFile.replace(/^videos\//, "")}
+              </Typography>
+            </div>
+          )}
           <Tooltip title="Control livestream and recording from here">
             <Typography variant="h2" gutterBottom>Video Control</Typography>
           </Tooltip>
