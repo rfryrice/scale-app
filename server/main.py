@@ -348,7 +348,7 @@ def video_file():
     size = os.path.getsize(video_path)
     if not range_header:
         # No Range header, send the whole file
-        return send_file(video_path, mimetype='video/x-msvideo')
+        return send_file(video_path, mimetype='video/mp4')
 
     # Parse Range header for exact byte range
     byte1, byte2 = 0, None
@@ -362,7 +362,7 @@ def video_file():
             byte2 = size - 1
     else:
         # Malformed Range header, ignore and send whole file
-        return send_file(video_path, mimetype='video/x-msvideo')
+        return send_file(video_path, mimetype='video/mp4')
 
     # Clamp values to file size
     byte2 = min(byte2, size - 1)
