@@ -146,16 +146,16 @@ def list_files():
     # List .csv files in the data directory
     csv_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.csv')]
 
-    # List .avi files in the data/videos directory
+    # List .mp4 files in the data/videos directory
     videos_dir = os.path.join(DATA_DIR, "videos")
     if not os.path.exists(videos_dir):
         os.makedirs(videos_dir)
-    avi_files = [os.path.join("videos", f) for f in os.listdir(videos_dir) if f.endswith('.avi')]
+    mp4_files = [os.path.join("videos", f) for f in os.listdir(videos_dir) if f.endswith('.mp4')]
 
     # Return both lists, with relative paths
     return jsonify({
         "csv_files": csv_files,
-        "avi_files": avi_files
+        "mp4_files": mp4_files
    })
 
 
@@ -258,7 +258,7 @@ def start_video():
     data = request.json or {}
     mode = data.get('mode')  # "livestream" or "record"
     timestamp_str = time.strftime('%Y-%m-%d')
-    filename = data.get('filename', f"{timestamp_str}.avi")
+    filename = data.get('filename', f"{timestamp_str}.mp4")
     with video_lock:
         if video_streamer is not None:
             return jsonify({"message": f"Video already running in {video_mode} mode."}), 400
@@ -337,7 +337,7 @@ def video_feed():
 def video_file():
     file = request.args.get('file')
     print(f"[DEBUG] /video-file requested filename: {file}")
-    if not file or not file.endswith('.avi'):
+    if not file or not file.endswith('.mp4'):
         return jsonify({'error': 'Invalid file'}), 400
     video_path = os.path.join(DATA_DIR, file)
     print(f"[DEBUG] /video-file resolved video_path: {video_path}")

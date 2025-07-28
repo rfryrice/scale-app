@@ -23,7 +23,7 @@ function VideoControl({ selectedFile }) {
   const intervalRef = useRef(null);
   const runtimeIntervalRef = useRef(null);
   // Helper: is the selected file a video?
-  const isVideoFile = selectedFile && selectedFile.endsWith('.avi');
+  const isVideoFile = selectedFile && selectedFile.endsWith('.mp4');
   // Compute video URL if selected, using new backend route
   const videoUrl = isVideoFile ? `${API_URL}/video-file?file=${encodeURIComponent(selectedFile)}` : null;
   // State for video drawer
@@ -86,7 +86,7 @@ function VideoControl({ selectedFile }) {
                   2,
                   "0"
                 )}`;
-                const newFilename = `output_${formatted}.avi`;
+                const newFilename = `output_${formatted}.mp4`;
                 const res = await axios.post(`${API_URL}/video/start`, {
                   mode: "record",
                   filename: newFilename,
@@ -129,7 +129,7 @@ function VideoControl({ selectedFile }) {
       )}-${String(now.getSeconds()).padStart(2, "0")}`;
       const body =
         mode === "record"
-          ? { mode, filename: filename || `output_${formatted}.avi` }
+          ? { mode, filename: filename || `output_${formatted}.mp4` }
           : { mode };
       const res = await axios.post(`${API_URL}/video/start`, body);
       setVideoStatus(res.data);
