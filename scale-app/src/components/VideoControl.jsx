@@ -22,6 +22,7 @@ function VideoControl({ selectedFile }) {
   const [recordRuntime, setRecordRuntime] = useState("00:00:00");
   const intervalRef = useRef(null);
   const runtimeIntervalRef = useRef(null);
+  const [showVideo, setShowVideo] = useState(false);
   // Helper: is the selected file a video?
   const isVideoFile = selectedFile && selectedFile.endsWith('.mp4');
   // DASH manifest URL for selected video
@@ -65,8 +66,6 @@ function VideoControl({ selectedFile }) {
     };
     // Only rerun if drawer, file, or manifest changes
   }, [showVideo, dashManifestUrl, isVideoFile, selectedFile]);
-  // State for video drawer
-  const [showVideo, setShowVideo] = useState(false);
 
   // Fetch status only if polling (i.e. after starting)
   useEffect(() => {
