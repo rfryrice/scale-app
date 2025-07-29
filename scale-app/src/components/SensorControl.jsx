@@ -7,6 +7,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import SevenSegmentDisplay from "./SevenSegmentDisplay";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -154,7 +155,8 @@ function SensorControl({ onDataChanged }) {
       setSensorRunning(true);
     } catch (err) {
       setConfirmationMsg(
-        err?.response?.data?.message || "Error starting sensor and video recording"
+        err?.response?.data?.message ||
+          "Error starting sensor and video recording"
       );
     }
     setLoading(false);
@@ -177,9 +179,11 @@ function SensorControl({ onDataChanged }) {
   };
 
   // Render calibration flow UI
-return (
+  return (
     <div>
-      <Typography variant="h2" gutterBottom>Sensor Control</Typography>
+      <Typography variant="h2" gutterBottom>
+        Sensor Control
+      </Typography>
       {sensorRunning && (
         <div style={{ marginBottom: 16 }}>
           <SevenSegmentDisplay value={sensorValue} />
@@ -205,10 +209,10 @@ return (
       {!status && (
         <Box
           sx={{
-            display: 'flex',
-            flexDirection: 'column',
+            display: "flex",
+            flexDirection: "column",
             gap: { xs: 2, md: 3 },
-            alignItems: 'center',
+            alignItems: "center",
             mt: 2,
             mb: 2,
           }}
@@ -231,11 +235,11 @@ return (
                 sx={{
                   px: { xs: 2, md: 3 },
                   py: { xs: 1, md: 1.5 },
-                  fontSize: { xs: '1rem', md: '1.15rem' },
+                  fontSize: { xs: "1rem", md: "1.15rem" },
                   borderRadius: { xs: 2, md: 3 },
                   minWidth: 120,
                   boxShadow: 2,
-                  width: '100%',
+                  width: "100%",
                   maxWidth: 260,
                 }}
               >
@@ -252,11 +256,11 @@ return (
               sx={{
                 px: { xs: 2, md: 3 },
                 py: { xs: 1, md: 1.5 },
-                fontSize: { xs: '1rem', md: '1.15rem' },
+                fontSize: { xs: "1rem", md: "1.15rem" },
                 borderRadius: { xs: 2, md: 3 },
                 minWidth: 120,
                 boxShadow: 2,
-                width: '100%',
+                width: "100%",
                 maxWidth: 260,
               }}
             >
@@ -272,11 +276,11 @@ return (
               sx={{
                 px: { xs: 2, md: 3 },
                 py: { xs: 1, md: 1.5 },
-                fontSize: { xs: '1rem', md: '1.15rem' },
+                fontSize: { xs: "1rem", md: "1.15rem" },
                 borderRadius: { xs: 2, md: 3 },
                 minWidth: 120,
                 boxShadow: 2,
-                width: '100%',
+                width: "100%",
                 maxWidth: 260,
               }}
             >
@@ -292,17 +296,18 @@ return (
               sx={{
                 px: { xs: 2, md: 3 },
                 py: { xs: 1, md: 1.5 },
-                fontSize: { xs: '1rem', md: '1.15rem' },
+                fontSize: { xs: "1rem", md: "1.15rem" },
                 borderRadius: { xs: 2, md: 3 },
                 minWidth: 120,
                 boxShadow: 2,
-                width: '100%',
+                width: "100%",
                 maxWidth: 260,
               }}
             >
               Stop Sensor
             </Button>
           )}
+        </Box>
         </Box>
       )}
       {status?.step === "place_weight" && (
