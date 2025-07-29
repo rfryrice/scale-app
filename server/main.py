@@ -15,7 +15,6 @@ import threading
 from thread_report import report_gpiochip0_users
 import re
 from system_monitor import system_monitor
-from generate_dash import generate_dash
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -297,23 +296,30 @@ def stop_video():
         except Exception as e:
             print(f"[ERROR] Exception during video stop/release: {e}")
             return jsonify({"message": f"Error stopping video: {e}"}), 500
-        # Check if recording stopped cleanly
+        
+        # Check if recording completed successfully (for recording mode only)
         stopped_mode = video_mode
         stopped_filename = video_filename
-        mp4_path = None
-        if stopped_mode == 'record' and stopped_filename:
-            mp4_path = os.path.join(DATA_DIR, 'videos', stopped_filename)
-            if not os.path.isfile(mp4_path):
-                mp4_path = os.path.join(DATA_DIR, stopped_filename)
-            clean = video_streamer.recording_stopped_cleanly(mp4_path)
-            print(f"[DEBUG] Recording stopped cleanly: {clean}")
+        recording_success = True
+        
+        if stopped_mode == 'record' and video_streamer:
+            recording_success = video_streamer.recording_completed_successfully()
+            print(f"[DEBUG] Recording completed successfully: {recording_success}")
+            
         video_streamer = None
         video_mode = None
         video_filename = None
-    # Only stop and release video, no DASH conversion
-    if stopped_mode == 'record' and stopped_filename and mp4_path and not clean:
-        print(f"[ERROR] Recording did not stop cleanly or file is invalid: {mp4_path}")
-    return jsonify({"message": f"{stopped_mode.capitalize()} stopped.", "mode": stopped_mode, "filename": stopped_filename, "clean": clean if stopped_mode == 'record' else None}), 200
+    
+    # Log any recording issues
+    if stopped_mode == 'record' and not recording_success:
+        print(f"[ERROR] Recording did not complete successfully: {stopped_filename}")
+    
+    return jsonify({
+        "message": f"{stopped_mode.capitalize()} stopped.", 
+        "mode": stopped_mode, 
+        "filename": stopped_filename, 
+        "success": recording_success if stopped_mode == 'record' else True
+    }), 200
 
 
 @app.route('/video/status', methods=['GET'])
@@ -393,42 +399,6 @@ def video_file():
     rv.headers.add('Content-Length', str(length))
     return rv
 
-# DASH video streaming endpoints
-@app.route('/video/dash/manifest')
-def dash_manifest():
-    """
-    Serve the DASH MPD manifest for a given video file.
-    Expects ?file=<filename.mp4> (must exist in data/videos/)
-    The manifest is expected at data/videos/<basename>_dash/manifest.mpd
-    """
-    file = request.args.get('file')
-    if not file or not file.endswith('.mp4'):
-        return jsonify({'error': 'Invalid file'}), 400
-    base = os.path.splitext(file)[0]
-    dash_dir = os.path.join(DATA_DIR, 'videos', f'{base}_dash')
-    manifest_path = os.path.join(dash_dir, 'manifest.mpd')
-    if not os.path.isfile(manifest_path):
-        return jsonify({'error': 'DASH manifest not found. Please generate DASH files for this video.'}), 404
-    return send_from_directory(dash_dir, 'manifest.mpd', mimetype='application/dash+xml')
-
-
-@app.route('/video/dash/segment/<video>/<segment>')
-def dash_segment(video, segment):
-    """
-    Serve a DASH segment file for a given video.
-    <video> is the base name (without .mp4), <segment> is the segment filename (e.g. 'init.mp4', 'chunk1.m4s')
-    Segments are expected at data/videos/<video>_dash/<segment>
-    """
-    dash_dir = os.path.join(DATA_DIR, 'videos', f'{video}_dash')
-    segment_path = os.path.join(dash_dir, segment)
-    if not os.path.isfile(segment_path):
-        return jsonify({'error': 'Segment not found'}), 404
-    # Guess mimetype based on extension
-    if segment.endswith('.mp4') or segment.endswith('.m4s'):
-        mimetype = 'video/mp4'
-    else:
-        mimetype = 'application/octet-stream'
-    return send_from_directory(dash_dir, segment, mimetype=mimetype)
 
 if __name__ == "__main__":
     with app.app_context():
