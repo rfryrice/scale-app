@@ -58,7 +58,7 @@ class VideoStreamer:
                 
                 # Use H.264 encoder for web compatibility
                 self.recording_encoder = self.picam2.start_encoder(
-                    'h264', 
+                    encoder='h264',
                     output=full_path,
                     quality='high'
                 )
