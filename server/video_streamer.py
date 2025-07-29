@@ -3,6 +3,7 @@ import time
 import subprocess
 import numpy as np
 from picamera2 import Picamera2
+from picamera2.encoders import H264Encoder
 import cv2
 import os
 
@@ -56,9 +57,10 @@ class VideoStreamer:
                 full_path = os.path.join(video_dir, filename)
                 self.record_filename = full_path
                 
-                # Use H.264 encoder for web compatibility
+                # Use H264Encoder for web compatibility
+                encoder = H264Encoder()
                 self.recording_encoder = self.picam2.start_encoder(
-                    encoder='h264',
+                    encoder=encoder,
                     output=full_path,
                     quality='high'
                 )
