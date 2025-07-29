@@ -399,6 +399,40 @@ def video_file():
     rv.headers.add('Content-Length', str(length))
     return rv
 
+@app.route('/sync/start', methods=['POST'])
+def start_sensor_and_video():
+    global sensor_thread, video_streamer, video_mode, video_filename
+    # Start sensor loop
+    sensor_response = None
+    if not sensor.sensor_thread_event.is_set():
+        sensor.sensor_thread_running = True
+        sensor.sensor_thread_event.set()
+        sensor_thread = threading.Thread(target=sensor.read_sensor_loop, daemon=True)
+        sensor_thread.start()
+        sensor_response = {"message": "Sensor reading loop started."}
+    else:
+        sensor_response = {"message": "Sensor reading loop already running."}
+
+    # Start video recording
+    data = request.json or {}
+    timestamp_str = time.strftime('%Y-%m-%d')
+    filename = data.get('filename', f"{timestamp_str}.mp4")
+    video_resp = None
+    with video_lock:
+        if video_streamer is not None:
+            video_resp = {"message": f"Video already running in {video_mode} mode.", "mode": video_mode, "filename": video_filename}
+        else:
+            try:
+                video_streamer = VideoStreamer()
+                video_streamer.start_recording(filename)
+                video_mode = 'record'
+                video_filename = filename
+                video_resp = {"message": "Recording started.", "mode": video_mode, "filename": video_filename}
+            except CameraBusyException:
+                video_resp = {"message": "Camera is currently in use by another user."}
+
+    return jsonify({"sensor": sensor_response, "video": video_resp}), 200
+
 
 if __name__ == "__main__":
     with app.app_context():

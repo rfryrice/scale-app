@@ -141,6 +141,24 @@ function SensorControl({ onDataChanged }) {
   };
 
   // Stop sensor data logging
+  // Start both sensor and video recording in sync
+  const startSensorAndVideo = async () => {
+    setLoading(true);
+    setConfirmationMsg("");
+    setCsvFilename(null);
+    try {
+      const res = await axios.post(`${API_URL}/sync/start`);
+      const sensorMsg = res.data.sensor?.message || "Sensor status unknown.";
+      const videoMsg = res.data.video?.message || "Video status unknown.";
+      setConfirmationMsg(`${sensorMsg} Video: ${videoMsg}`);
+      setSensorRunning(true);
+    } catch (err) {
+      setConfirmationMsg(
+        err?.response?.data?.message || "Error starting sensor and video recording"
+      );
+    }
+    setLoading(false);
+  };
   const stopSensorLoop = async () => {
     setLoading(true);
     setCsvFilename(null);
@@ -185,7 +203,16 @@ return (
       {loading && <CircularProgress size={32} sx={{ my: 2 }} />}
       {/* Calibration Steps */}
       {!status && (
-        <>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: { xs: 2, md: 3 },
+            alignItems: 'center',
+            mt: 2,
+            mb: 2,
+          }}
+        >
           <Tooltip
             title={
               lastCalibration !== null
@@ -201,7 +228,16 @@ return (
                 color="primary"
                 onClick={startCalibrate}
                 disabled={loading || sensorRunning}
-                sx={{ mr: 2 }}
+                sx={{
+                  px: { xs: 2, md: 3 },
+                  py: { xs: 1, md: 1.5 },
+                  fontSize: { xs: '1rem', md: '1.15rem' },
+                  borderRadius: { xs: 2, md: 3 },
+                  minWidth: 120,
+                  boxShadow: 2,
+                  width: '100%',
+                  maxWidth: 260,
+                }}
               >
                 Calibrate
               </Button>
@@ -213,8 +249,38 @@ return (
               color="success"
               onClick={startSensorLoop}
               disabled={loading}
+              sx={{
+                px: { xs: 2, md: 3 },
+                py: { xs: 1, md: 1.5 },
+                fontSize: { xs: '1rem', md: '1.15rem' },
+                borderRadius: { xs: 2, md: 3 },
+                minWidth: 120,
+                boxShadow: 2,
+                width: '100%',
+                maxWidth: 260,
+              }}
             >
               Start Sensor
+            </Button>
+          )}
+          {!sensorRunning && (
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={startSensorAndVideo}
+              disabled={loading}
+              sx={{
+                px: { xs: 2, md: 3 },
+                py: { xs: 1, md: 1.5 },
+                fontSize: { xs: '1rem', md: '1.15rem' },
+                borderRadius: { xs: 2, md: 3 },
+                minWidth: 120,
+                boxShadow: 2,
+                width: '100%',
+                maxWidth: 260,
+              }}
+            >
+              Start Sensor & Video
             </Button>
           )}
           {sensorRunning && (
@@ -223,12 +289,21 @@ return (
               color="error"
               onClick={stopSensorLoop}
               disabled={loading}
-              sx={{ ml: 2 }}
+              sx={{
+                px: { xs: 2, md: 3 },
+                py: { xs: 1, md: 1.5 },
+                fontSize: { xs: '1rem', md: '1.15rem' },
+                borderRadius: { xs: 2, md: 3 },
+                minWidth: 120,
+                boxShadow: 2,
+                width: '100%',
+                maxWidth: 260,
+              }}
             >
               Stop Sensor
             </Button>
           )}
-        </>
+        </Box>
       )}
       {status?.step === "place_weight" && (
         <Button
