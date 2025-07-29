@@ -21,6 +21,22 @@ class VideoStreamer:
         self.thread.start()
         print(f"[DEBUG] VideoStreamer thread started: {self.thread.is_alive()}")
 
+    def recording_stopped_cleanly(self, filename=None):
+        """
+        Check if the recording process exited cleanly and the MP4 file is valid (nonzero length).
+        Optionally, pass filename to check file existence and size.
+        """
+        proc_ok = True
+        file_ok = True
+        # Check process exit code
+        if hasattr(self, '_recording_proc') and self._recording_proc:
+            ret = self._recording_proc.poll()
+            proc_ok = (ret == 0)
+        # Check file existence and size
+        if filename:
+            file_ok = os.path.isfile(filename) and os.path.getsize(filename) > 1024  # >1KB
+        return proc_ok and file_ok
+
     def _update_frame(self):
         while self.running:
             if self.picam2 is None:

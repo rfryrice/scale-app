@@ -297,18 +297,22 @@ def stop_video():
         except Exception as e:
             print(f"[ERROR] Exception during video stop/release: {e}")
             return jsonify({"message": f"Error stopping video: {e}"}), 500
-        video_streamer = None
+        # Check if recording stopped cleanly
         stopped_mode = video_mode
         stopped_filename = video_filename
-        video_mode = None
-        video_filename = None
-    # Generate DASH files if a recording was stopped
-    if stopped_mode == 'record' and stopped_filename:
-        try:
-            # Try both data/videos/filename and data/filename for compatibility
+        mp4_path = None
+        if stopped_mode == 'record' and stopped_filename:
             mp4_path = os.path.join(DATA_DIR, 'videos', stopped_filename)
             if not os.path.isfile(mp4_path):
                 mp4_path = os.path.join(DATA_DIR, stopped_filename)
+            clean = video_streamer.recording_stopped_cleanly(mp4_path)
+            print(f"[DEBUG] Recording stopped cleanly: {clean}")
+        video_streamer = None
+        video_mode = None
+        video_filename = None
+    # Generate DASH files if a recording was stopped and clean
+    if stopped_mode == 'record' and stopped_filename and mp4_path and clean:
+        try:
             print(f"[DEBUG] Generating DASH for: {mp4_path}")
             dash_dir = generate_dash(mp4_path)
             if dash_dir:
@@ -317,7 +321,9 @@ def stop_video():
                 print(f"[ERROR] Failed to generate DASH files for: {mp4_path}")
         except Exception as e:
             print(f"[ERROR] Exception during DASH generation: {e}")
-    return jsonify({"message": f"{stopped_mode.capitalize()} stopped.", "mode": stopped_mode, "filename": stopped_filename}), 200
+    elif stopped_mode == 'record' and stopped_filename and mp4_path and not clean:
+        print(f"[ERROR] Recording did not stop cleanly or file is invalid: {mp4_path}")
+    return jsonify({"message": f"{stopped_mode.capitalize()} stopped.", "mode": stopped_mode, "filename": stopped_filename, "clean": clean if stopped_mode == 'record' else None}), 200
 
 
 @app.route('/video/status', methods=['GET'])
