@@ -310,18 +310,8 @@ def stop_video():
         video_streamer = None
         video_mode = None
         video_filename = None
-    # Generate DASH files if a recording was stopped and clean
-    if stopped_mode == 'record' and stopped_filename and mp4_path and clean:
-        try:
-            print(f"[DEBUG] Generating DASH for: {mp4_path}")
-            dash_dir = generate_dash(mp4_path)
-            if dash_dir:
-                print(f"[DEBUG] DASH files generated at: {dash_dir}")
-            else:
-                print(f"[ERROR] Failed to generate DASH files for: {mp4_path}")
-        except Exception as e:
-            print(f"[ERROR] Exception during DASH generation: {e}")
-    elif stopped_mode == 'record' and stopped_filename and mp4_path and not clean:
+    # Only stop and release video, no DASH conversion
+    if stopped_mode == 'record' and stopped_filename and mp4_path and not clean:
         print(f"[ERROR] Recording did not stop cleanly or file is invalid: {mp4_path}")
     return jsonify({"message": f"{stopped_mode.capitalize()} stopped.", "mode": stopped_mode, "filename": stopped_filename, "clean": clean if stopped_mode == 'record' else None}), 200
 
