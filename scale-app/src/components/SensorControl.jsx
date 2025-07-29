@@ -308,7 +308,6 @@ function SensorControl({ onDataChanged }) {
             </Button>
           )}
         </Box>
-        </Box>
       )}
       {status?.step === "place_weight" && (
         <Button
