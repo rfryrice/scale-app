@@ -75,6 +75,7 @@ class VideoStreamer:
                     "rpicam-vid",
                     "-o", filename,
                     "-t", "0",
+                    "-n",
                     "--width", str(w),
                     "--height", str(h),
                     "--codec", "h264",
