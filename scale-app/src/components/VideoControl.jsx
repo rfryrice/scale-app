@@ -85,7 +85,7 @@ function VideoControl({ selectedFile }) {
     }
   }, [polling]);
 
-  // Track recording runtime and handle midnight rollover
+  // Track recording runtime and handle midnight rollover, interrupt on error
   useEffect(() => {
     if (videoStatus.running && videoStatus.mode === "record") {
       if (!recordStartTime) {
@@ -102,6 +102,21 @@ function VideoControl({ selectedFile }) {
           setRecordRuntime(
             `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
           );
+          // Check for backend error (VideoStreamer)
+          try {
+            const statusRes = await axios.get(`${API_URL}/video/status`);
+            if (statusRes.data.error) {
+              setError(statusRes.data.error);
+              setPolling(false);
+              clearInterval(runtimeIntervalRef.current);
+              return;
+            }
+          } catch (err) {
+            setError(err.response?.data?.message || "VideoStreamer error.");
+            setPolling(false);
+            clearInterval(runtimeIntervalRef.current);
+            return;
+          }
           // Check if midnight has passed
           if (
             start.getDate() !== now.getDate() ||
@@ -140,6 +155,8 @@ function VideoControl({ selectedFile }) {
                   "Failed to rollover recording at midnight."
               );
               setPolling(false);
+              clearInterval(runtimeIntervalRef.current);
+              return;
             }
           }
         }

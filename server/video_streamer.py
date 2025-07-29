@@ -80,9 +80,6 @@ class VideoStreamer:
                     "--height", str(h),
                     "--codec", "h264",
                     "--framerate", "20"
-                    "--inline",
-                    "--output-format", "mp4",
-                    "--profile", "baseline",
                 ]
                 print(f"[DEBUG] Starting rpicam-vid: {' '.join(cmd)}")
                 self._recording_proc = subprocess.Popen(cmd)
