@@ -16,6 +16,16 @@ def generate_dash(mp4_path, segment_duration=4000):
     dash_dir = os.path.join(os.path.dirname(mp4_path), f"{base}_dash")
     os.makedirs(dash_dir, exist_ok=True)
     manifest_path = os.path.join(dash_dir, "manifest.mpd")
+    # Remux MP4 file to ensure validity
+    remuxed_path = os.path.join(os.path.dirname(mp4_path), f"{base}_remuxed.mp4")
+    ffmpeg_cmd = [
+        "ffmpeg", "-y", "-i", mp4_path, "-c", "copy", remuxed_path
+    ]
+    try:
+        subprocess.check_call(ffmpeg_cmd)
+    except subprocess.CalledProcessError as e:
+        print(f"[ERROR] ffmpeg remux failed: {e}")
+        return None
     # MP4Box command
     cmd = [
         MP4BOX_PATH,
@@ -24,7 +34,7 @@ def generate_dash(mp4_path, segment_duration=4000):
         "-rap",
         "-profile", "dashavc264:onDemand",
         "-out", manifest_path,
-        mp4_path
+        remuxed_path
     ]
     try:
         subprocess.check_call(cmd)
