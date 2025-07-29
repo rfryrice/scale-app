@@ -159,8 +159,8 @@ function SensorControl({ onDataChanged }) {
   };
 
   // Render calibration flow UI
-  return (
-    <div style={{ minWidth: 300 }}>
+return (
+    <div>
       <Typography variant="h2" gutterBottom>Sensor Control</Typography>
       {sensorRunning && (
         <div style={{ marginBottom: 16 }}>

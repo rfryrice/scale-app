@@ -103,7 +103,7 @@ export default function SystemMonitor() {
       boxShadow: 2,
       p: 2,
       minWidth: 340,
-      maxWidth: 520,
+      maxWidth: '90%',
       color: '#fff',
     }}>
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, color: '#fff' }}>System Monitor</Typography>

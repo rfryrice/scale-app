@@ -201,23 +201,22 @@ function VideoControl({ selectedFile }) {
           position: "relative",
         }}
       >
-        {/* Animated CardMedia drawer */}
-        {/* Video preview moved into CardContent below */}
+        {/* Video drawer on the left */}
+        {isVideoFile && showVideo && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: 24, marginBottom: 16 }}>
+            <video
+              src={videoUrl}
+              controls
+              style={{ width: 320, height: 240, border: "2px solid #333", borderRadius: 8, background: "#000", transition: "width 0.4s, height 0.4s" }}
+              poster=""
+            />
+            <Typography variant="subtitle1" gutterBottom sx={{ color: '#333', mt: 1 }}>
+              Video Preview: {selectedFile.replace(/^videos\//, "")}
+            </Typography>
+          </div>
+        )}
+        {/* CardContent to the right of video drawer */}
         <CardContent style={{ flex: 1, minWidth: 0 }}>
-          {/* Direct video player and label inside CardContent */}
-          {isVideoFile && showVideo && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 16 }}>
-              <video
-                src={videoUrl}
-                controls
-                style={{ width: 320, height: 240, border: "2px solid #333", borderRadius: 8, background: "#000", transition: "width 0.4s, height 0.4s" }}
-                poster=""
-              />
-              <Typography variant="subtitle1" gutterBottom sx={{ color: '#333', mt: 1 }}>
-                Video Preview: {selectedFile.replace(/^videos\//, "")}
-              </Typography>
-            </div>
-          )}
           <Tooltip title="Control livestream and recording from here">
             <Typography variant="h2" gutterBottom>Video Control</Typography>
           </Tooltip>
@@ -249,9 +248,13 @@ function VideoControl({ selectedFile }) {
             </Button>
           </div>
           {videoStatus.mode === "record" && videoStatus.filename && (
-            <div style={{ color: "green", marginTop: "1em", display: "flex", alignItems: "center", gap: "1em" }}>
-              Recording to file: <strong>{videoStatus.filename}</strong> 
-              Runtime: <span style={{ fontWeight: "bold" }}>{recordRuntime}</span>
+            <div style={{ color: "green", marginTop: "1em" }}>
+              <Typography variant="body1">
+                Recording to file: <strong>{videoStatus.filename}</strong>
+              </Typography>
+              <Typography variant="body1">
+                Runtime: <span style={{ fontWeight: "bold" }}>{recordRuntime}</span>
+              </Typography>
             </div>
           )}
           {error && <div style={{ color: "red", marginTop: "1em" }}>{error}</div>}
