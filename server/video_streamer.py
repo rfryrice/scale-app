@@ -3,7 +3,7 @@ import time
 import subprocess
 import numpy as np
 from picamera2 import Picamera2
-from picamera2.encoders import H264Encoder
+from picamera2.encoders import H264Encoder, Quality
 import cv2
 import os
 
@@ -62,7 +62,7 @@ class VideoStreamer:
                 self.recording_encoder = self.picam2.start_encoder(
                     encoder=encoder,
                     output=full_path,
-                    quality='high'
+                    quality=Quality.HIGH
                 )
                 self.recording = True
                 print(f"[DEBUG] Recording started to: {full_path}")
