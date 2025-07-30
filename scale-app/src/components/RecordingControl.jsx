@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import VideoControl from "./VideoControl";
 import SensorControl from "./SensorControl";
+import {Box} from "@mui/material";
 
 function RecordingControl({ selectedFile, onDataChanged }) {
   const [videoStatus, setVideoStatus] = useState({ running: false, mode: null, filename: null });
