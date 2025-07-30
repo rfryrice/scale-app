@@ -53,20 +53,24 @@ function RecordingControl({ selectedFile, onDataChanged }) {
   };
 
   return (
-    <>
-      <SensorControl
-        onDataChanged={onDataChanged}
-        onStartSensorAndVideo={handleStartSensorAndVideo}
-        videoStatus={videoStatus}
-        recordStartTime={recordStartTime}
-      />
-      <VideoControl
-        selectedFile={selectedFile}
-        videoStatus={videoStatus}
-        recordStartTime={recordStartTime}
-        onStartVideo={handleStartVideo}
-      />
-    </>
+    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, alignItems: 'flex-start', width: '100%' }}>
+      <Box sx={{ flex: 1 }}>
+        <SensorControl
+          onDataChanged={onDataChanged}
+          onStartSensorAndVideo={handleStartSensorAndVideo}
+          videoStatus={videoStatus}
+          recordStartTime={recordStartTime}
+        />
+      </Box>
+      <Box sx={{ flex: 1 }}>
+        <VideoControl
+          selectedFile={selectedFile}
+          videoStatus={videoStatus}
+          recordStartTime={recordStartTime}
+          onStartVideo={handleStartVideo}
+        />
+      </Box>
+    </Box>
   );
 }
 

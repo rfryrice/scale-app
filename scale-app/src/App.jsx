@@ -184,20 +184,13 @@ function App() {
                         <Grid size={{ xs: 12, md: 4 }}>
                           <Card sx={{ height: "100%" }}>
                             <CardContent>
-                              <RecordingControl selectedFile={selectedFile} onDataChanged={handleDataChanged} />
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 12 }}>
-                          <Card sx={{ mb: 2 }}>
-                              <RecordingControl selectedFile={selectedFile} onDataChanged={handleDataChanged} />
-                          </Card>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 12 }}>
-                          <Card sx={{ mb: 2 }}>
-                            <CardContent>
                               <SystemMonitor />
                             </CardContent>
+                          </Card>
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 12 }}>
+                          <Card sx={{ mb: 2 }}>
+                              <RecordingControl selectedFile={selectedFile} onDataChanged={handleDataChanged} />
                           </Card>
                         </Grid>
                       </Grid>
