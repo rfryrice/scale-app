@@ -189,7 +189,7 @@ function App() {
                           </Card>
                         </Grid>
                         <Grid size={{ xs: 12, md: 12 }}>
-                          <Card sx={{ mb: 2 }}>
+                          <Card sx={{ mb: 2, height: "100%" }}>
                               <RecordingControl selectedFile={selectedFile} onDataChanged={handleDataChanged} />
                           </Card>
                         </Grid>

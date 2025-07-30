@@ -21,6 +21,9 @@ function RecordingControl({ selectedFile, onDataChanged }) {
   const [error, setError] = useState("");
   const intervalRef = useRef(null);
   const runtimeIntervalRef = useRef(null);
+  // Sync state
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncMsg, setSyncMsg] = useState("");
 
   // Sensor polling
   useEffect(() => {
@@ -220,6 +223,22 @@ function RecordingControl({ selectedFile, onDataChanged }) {
     }
   };
 
+  // Sync handler
+  const handleSyncStart = async () => {
+    setSyncLoading(true);
+    setSyncMsg("");
+    try {
+      const res = await axios.post(`${API_URL}/sync/start`);
+      setSyncMsg(res.data.message || "Sensor and video recording started.");
+      setSensorRunning(true);
+      setVideoStatus({ running: true, mode: "record", filename: res.data.filename || null });
+      setRecordStartTime(Date.now());
+    } catch (err) {
+      setSyncMsg(err?.response?.data?.message || "Error starting sync recording");
+    }
+    setSyncLoading(false);
+  };
+
   const handleStopVideo = async () => {
     setError("");
     try {
@@ -233,11 +252,29 @@ function RecordingControl({ selectedFile, onDataChanged }) {
 
   // Unified layout
   return (
-    <Box sx={{ background: '#181818', borderRadius: 2, boxShadow: 2, p: 3, maxWidth: 700, margin: '0 auto', color: '#fff' }}>
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>Recording Control</Typography>
+    <Box sx={{ background: '#181818', borderRadius: 2, boxShadow: 2, p: 3, maxWidth: '90%', margin: '0 auto', color: '#fff' }}>
+      <Typography variant="h2" sx={{ fontWeight: 700, mb: 2 }}>Recording Control</Typography>
       {/* Sensor Section */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, color: '#90caf9' }}>Sensor</Typography>
+        <Typography variant="h3" sx={{ fontWeight: 600, mb: 1, color: '#90caf9' }}>Sensor</Typography>
+        {/* Sync Button */}
+        <Box sx={{ mb: 2 }}>
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={handleSyncStart}
+            disabled={syncLoading || sensorRunning || videoStatus.running}
+            sx={{ px: 2, py: 1.5, fontSize: "1.15rem", borderRadius: 3, minWidth: 120, boxShadow: 2, width: "100%", maxWidth: 180 }}
+          >
+            Start Sensor & Video Recording
+          </Button>
+          {syncLoading && <CircularProgress size={24} sx={{ ml: 2 }} />}
+          {syncMsg && (
+            <Alert severity={syncMsg.toLowerCase().includes("error") ? "error" : "success"} sx={{ mt: 2, width: '80%' }}>
+              {syncMsg}
+            </Alert>
+          )}
+        </Box>
         {sensorRunning && (
           <Box sx={{ mb: 2 }}>
             <SevenSegmentDisplay value={sensorValue} />
@@ -368,7 +405,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
       </Box>
       {/* Video Section */}
       <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, color: '#f48fb1' }}>Video</Typography>
+        <Typography variant="h3" sx={{ fontWeight: 600, mb: 1, color: '#f48fb1' }}>Video</Typography>
         <Box sx={{ display: "flex", flexDirection: "row", gap: 2, alignItems: "center", mb: 2 }}>
           <Button
             variant="contained"

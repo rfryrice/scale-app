@@ -202,7 +202,7 @@ function SensorControl({ onDataChanged, onStartSensorAndVideo, videoStatus, reco
         </div>
       )}
       {confirmationMsg && (
-        <Alert severity="success" sx={{ mb: 2 }}>
+        <Alert severity="success" sx={{ mb: 2, width: '80%' }}>
           {confirmationMsg}
           {csvFilename && (
             <div>
