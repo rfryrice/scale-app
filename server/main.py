@@ -402,35 +402,56 @@ def video_file():
 @app.route('/sync/start', methods=['POST'])
 def start_sensor_and_video():
     global sensor_thread, video_streamer, video_mode, video_filename
+    # Debug: Log incoming request
+    print("[DEBUG] /sync/start called")
+    print(f"[DEBUG] Request JSON: {request.json}")
     # Start sensor loop
     sensor_response = None
-    if not sensor.sensor_thread_event.is_set():
-        sensor.sensor_thread_running = True
-        sensor.sensor_thread_event.set()
-        sensor_thread = threading.Thread(target=sensor.read_sensor_loop, daemon=True)
-        sensor_thread.start()
-        sensor_response = {"message": "Sensor reading loop started."}
-    else:
-        sensor_response = {"message": "Sensor reading loop already running."}
+    try:
+        if not sensor.sensor_thread_event.is_set():
+            print("[DEBUG] Sensor thread not running. Starting...")
+            sensor.sensor_thread_running = True
+            sensor.sensor_thread_event.set()
+            sensor_thread = threading.Thread(target=sensor.read_sensor_loop, daemon=True)
+            sensor_thread.start()
+            sensor_response = {"message": "Sensor reading loop started."}
+        else:
+            print("[DEBUG] Sensor thread already running.")
+            sensor_response = {"message": "Sensor reading loop already running."}
+    except Exception as e:
+        print(f"[ERROR] Exception starting sensor thread: {e}")
+        sensor_response = {"error": str(e)}
 
     # Start video recording
     data = request.json or {}
     timestamp_str = time.strftime('%Y-%m-%d')
     filename = data.get('filename', f"{timestamp_str}.mp4")
     video_resp = None
-    with video_lock:
-        if video_streamer is not None:
-            video_resp = {"message": f"Video already running in {video_mode} mode.", "mode": video_mode, "filename": video_filename}
-        else:
-            try:
-                video_streamer = VideoStreamer()
-                video_streamer.start_recording(filename)
-                video_mode = 'record'
-                video_filename = filename
-                video_resp = {"message": "Recording started.", "mode": video_mode, "filename": video_filename}
-            except CameraBusyException:
-                video_resp = {"message": "Camera is currently in use by another user."}
+    try:
+        with video_lock:
+            if video_streamer is not None:
+                print(f"[DEBUG] Video already running in {video_mode} mode. Filename: {video_filename}")
+                video_resp = {"message": f"Video already running in {video_mode} mode.", "mode": video_mode, "filename": video_filename}
+            else:
+                try:
+                    print(f"[DEBUG] Starting video recording. Filename: {filename}")
+                    video_streamer = VideoStreamer()
+                    video_streamer.start_recording(filename)
+                    video_mode = 'record'
+                    video_filename = filename
+                    video_resp = {"message": "Recording started.", "mode": video_mode, "filename": video_filename}
+                except CameraBusyException:
+                    print("[ERROR] Camera is currently in use by another user.")
+                    video_resp = {"message": "Camera is currently in use by another user."}
+                except Exception as ve:
+                    print(f"[ERROR] Exception starting video recording: {ve}")
+                    video_resp = {"error": str(ve)}
+    except Exception as e:
+        print(f"[ERROR] Exception in video lock block: {e}")
+        video_resp = {"error": str(e)}
 
+    print(f"[DEBUG] Sensor response: {sensor_response}")
+    print(f"[DEBUG] Video response: {video_resp}")
     return jsonify({"sensor": sensor_response, "video": video_resp}), 200
 
 
