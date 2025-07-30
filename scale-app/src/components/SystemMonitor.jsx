@@ -107,7 +107,14 @@ export default function SystemMonitor() {
       color: '#fff',
     }}>
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, color: '#fff' }}>System Monitor</Typography>
-      <Box sx={{ display: 'flex', gap: 3, mb: 2 }}>
+      <Box sx={{
+        display: 'flex',
+        gap: 3,
+        mb: 2,
+        flexDirection: { xs: 'column', sm: 'row' },
+        alignItems: 'stretch',
+        width: '100%',
+      }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography variant="subtitle2" sx={{ color: '#90caf9', fontWeight: 600 }}>CPU</Typography>
           <Typography variant="h4" sx={{ color: '#1976d2', fontWeight: 700, mb: 0 }}>{data.cpu_percent}%</Typography>
