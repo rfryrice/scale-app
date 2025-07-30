@@ -22,6 +22,21 @@ function SensorControl({ onDataChanged }) {
   const [sensorValue, setSensorValue] = useState(null);
   const [lastCalibration, setLastCalibration] = useState(null);
 
+  // Tare the sensor
+  const tareSensor = async () => {
+    setLoading(true);
+    setConfirmationMsg("");
+    try {
+      const res = await axios.post(`${API_URL}/sensor/tare`);
+      setConfirmationMsg(res.data.message || "Sensor tared (zeroed).");
+    } catch (err) {
+      setConfirmationMsg(
+        err?.response?.data?.message || "Error taring sensor"
+      );
+    }
+    setLoading(false);
+  };
+
   // Only check calibration ratio on mount
   useEffect(() => {
     axios
@@ -261,6 +276,24 @@ function SensorControl({ onDataChanged }) {
               </Button>
             </span>
           </Tooltip>
+          <Button
+            variant="outlined"
+            color="info"
+            onClick={tareSensor}
+            disabled={loading}
+            sx={{
+              px: { xs: 2, md: 3 },
+              py: { xs: 1, md: 1.5 },
+              fontSize: { xs: "1rem", md: "1.15rem" },
+              borderRadius: { xs: 2, md: 3 },
+              minWidth: 120,
+              boxShadow: 2,
+              width: "100%",
+              maxWidth: 260,
+            }}
+          >
+            Tare (Zero Scale)
+          </Button>
           {!sensorRunning && (
             <Button
               variant="contained"

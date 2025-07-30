@@ -253,6 +253,20 @@ def sensor_value():
         return jsonify({"message": "No sensor value available."}), 204
     return jsonify({"value": value}), 200
 
+@app.route('/sensor/tare', methods=['POST'])
+def sensor_tare():
+    try:
+        # Tare the sensor (zero the scale)
+        if hasattr(sensor, 'tare_sensor'):
+            sensor.tare_sensor()
+        elif hasattr(hx, 'tare'):
+            hx.tare()
+        else:
+            return jsonify({"message": "Tare function not implemented."}), 501
+        return jsonify({"message": "Sensor tared (zeroed)."}), 200
+    except Exception as e:
+        return jsonify({"message": f"Error taring sensor: {e}"}), 500
+
 @app.route('/video/start', methods=['POST'])
 def start_video():
     global video_streamer, video_mode, video_filename

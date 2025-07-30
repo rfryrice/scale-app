@@ -186,3 +186,11 @@ def set_sensor_value(val):
 def get_sensor_value():
     global latest_sensor_value
     return latest_sensor_value
+
+def tare_sensor():
+    """Zero the scale by calling hx.tare."""
+    if hx is not None:
+        hx.tare()
+        print("[DEBUG] Sensor tared (zeroed) via tare_sensor().")
+    else:
+        raise RuntimeError("HX711 instance not set. Cannot tare sensor.")
