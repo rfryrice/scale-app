@@ -21,38 +21,33 @@ function SensorControl({ onDataChanged }) {
   const [sensorValue, setSensorValue] = useState(null);
   const [lastCalibration, setLastCalibration] = useState(null);
 
-  // Check sensor running status on mount and after calibration
+  // Only check calibration ratio on mount
   useEffect(() => {
     axios
       .get(`${API_URL}/sensor/status`)
       .then((res) => {
-        setSensorRunning(res.data.running);
         setLastCalibration(res.data.last_calibration);
       })
       .catch(() => {
-        setSensorRunning(false);
         setLastCalibration(null);
       });
   }, []);
 
-  // Poll sensor value when running
+  // Poll sensor value only after sensor is started
   useEffect(() => {
     let intervalId;
     if (sensorRunning) {
-      // Fetch sensor value every 500ms
       intervalId = setInterval(() => {
         axios
           .get(`${API_URL}/sensor/value`)
           .then((res) => {
             let val = res.data.value;
             if (typeof val === "number") {
-              setSensorValue(val.toFixed(2)); // Format to 2 decimal places
-            } else setSensorValue(val); // Handle unexpected response
+              setSensorValue(val.toFixed(2));
+            } else setSensorValue(val);
           })
           .catch(() => setSensorValue(null));
       }, 500);
-    } else {
-      setSensorValue(null);
     }
     return () => clearInterval(intervalId);
   }, [sensorRunning]);
@@ -131,7 +126,7 @@ function SensorControl({ onDataChanged }) {
     setCsvFilename(null);
     try {
       const res = await axios.post(`${API_URL}/sensor/start`);
-      setSensorRunning(true);
+      setSensorRunning(true); // Start polling only after button click
       setConfirmationMsg(res.data.message);
     } catch (err) {
       setConfirmationMsg(
@@ -156,9 +151,9 @@ function SensorControl({ onDataChanged }) {
       const sensorMsg = res.data.sensor?.message || "Sensor status unknown.";
       const videoMsg = res.data.video?.message || "Video status unknown.";
       setConfirmationMsg(`${sensorMsg} Video: ${videoMsg}`);
-      setSensorRunning(true);
+      setSensorRunning(true); // Start polling only after button click
     } catch (err) {
-      console.error("Error starting sensor and video recording:", err); // <-- Add this line
+      console.error("Error starting sensor and video recording:", err);
       setConfirmationMsg(
         err?.response?.data?.message ||
           "Error starting sensor and video recording"
