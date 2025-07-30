@@ -154,6 +154,7 @@ function SensorControl({ onDataChanged }) {
       setConfirmationMsg(`${sensorMsg} Video: ${videoMsg}`);
       setSensorRunning(true);
     } catch (err) {
+      console.error("Error starting sensor and video recording:", err); // <-- Add this line
       setConfirmationMsg(
         err?.response?.data?.message ||
           "Error starting sensor and video recording"
