@@ -148,7 +148,11 @@ function SensorControl({ onDataChanged }) {
     setConfirmationMsg("");
     setCsvFilename(null);
     try {
-      const res = await axios.post(`${API_URL}/sync/start`);
+      const res = await axios.post(
+        `${API_URL}/sync/start`,
+        {},
+        { headers: { "Content-Type": "application/json" } }
+      );
       const sensorMsg = res.data.sensor?.message || "Sensor status unknown.";
       const videoMsg = res.data.video?.message || "Video status unknown.";
       setConfirmationMsg(`${sensorMsg} Video: ${videoMsg}`);
