@@ -11,14 +11,14 @@ import Box from "@mui/material/Box";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-function SensorControl({ onDataChanged }) {
+function SensorControl({ onDataChanged, onStartSensorAndVideo, videoStatus, recordStartTime }) {
   const [status, setStatus] = useState(null); // Calibration status
   const [loading, setLoading] = useState(false);
   const [knownWeight, setKnownWeight] = useState("");
   const [sensorRunning, setSensorRunning] = useState(false);
   const [confirmationMsg, setConfirmationMsg] = useState("");
   const [csvFilename, setCsvFilename] = useState(null);
-  const [videoRuntime, setVideoRuntime] = useState(null); // New state for video runtime
+  // Remove local videoRuntime state, use recordStartTime from parent
   const [sensorValue, setSensorValue] = useState(null);
   const [lastCalibration, setLastCalibration] = useState(null);
 
@@ -153,34 +153,23 @@ function SensorControl({ onDataChanged }) {
   };
 
   // Stop sensor data logging
-  // Start both sensor and video recording in sync
+  // Use parent's handler for starting sensor+video
   const startSensorAndVideo = async () => {
     setLoading(true);
     setConfirmationMsg("");
     setCsvFilename(null);
     try {
-      const res = await axios.post(
-        `${API_URL}/sync/start`,
-        {},
-        { headers: { "Content-Type": "application/json" } }
-      );
-      const sensorMsg = res.data.sensor?.message || "Sensor status unknown.";
-      const videoMsg = res.data.video?.message || "Video status unknown.";
-      setConfirmationMsg(`${sensorMsg} Video: ${videoMsg}`);
-      setSensorRunning(true); // Start polling only after button click
-      // If backend returns runtime info, set it here
-      if (res.data.video?.runtime) {
-        setVideoRuntime(res.data.video.runtime);
+      const res = await onStartSensorAndVideo && onStartSensorAndVideo();
+      if (res) {
+        const sensorMsg = res.sensor?.message || "Sensor status unknown.";
+        const videoMsg = res.video?.message || "Video status unknown.";
+        setConfirmationMsg(`${sensorMsg} Video: ${videoMsg}`);
+        setSensorRunning(true);
       } else {
-        setVideoRuntime(null);
+        setConfirmationMsg("Error starting sensor and video recording");
       }
     } catch (err) {
-      console.error("Error starting sensor and video recording:", err);
-      setConfirmationMsg(
-        err?.response?.data?.message ||
-          "Error starting sensor and video recording"
-      );
-      setVideoRuntime(null);
+      setConfirmationMsg("Error starting sensor and video recording");
     }
     setLoading(false);
   };
@@ -222,12 +211,7 @@ function SensorControl({ onDataChanged }) {
           )}
         </Alert>
       )}
-      {/* Pass videoRuntime to VideoControl if available */}
-      {videoRuntime && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Video runtime: {videoRuntime}
-        </Alert>
-      )}
+      {/* SensorControl does not display video runtime. VideoControl will handle runtime and filename display when recording is active. */}
       {status && status.message && (
         <Alert severity={status.step === "error" ? "error" : "info"}>
           {status.message}
@@ -277,7 +261,7 @@ function SensorControl({ onDataChanged }) {
             </span>
           </Tooltip>
           <Button
-            variant="outlined"
+            variant="contained"
             color="info"
             onClick={tareSensor}
             disabled={loading}

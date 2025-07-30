@@ -21,6 +21,7 @@ import TopBar from "./scenes/global/TopBar";
 import PersistentDrawerLeft from "./scenes/global/Drawer";
 import SensorControl from "./components/SensorControl";
 import SystemMonitor from "./components/SystemMonitor";
+import RecordingControl from "./components/RecordingControl";
 
 function App() {
   const [theme, colorMode] = useMode();
@@ -183,13 +184,13 @@ function App() {
                         <Grid size={{ xs: 12, md: 4 }}>
                           <Card sx={{ height: "100%" }}>
                             <CardContent>
-                              <SensorControl onDataChanged={handleDataChanged} />
+                              <RecordingControl selectedFile={selectedFile} onDataChanged={handleDataChanged} />
                             </CardContent>
                           </Card>
                         </Grid>
                         <Grid size={{ xs: 12, md: 12 }}>
                           <Card sx={{ mb: 2 }}>
-                              <VideoControl selectedFile={selectedFile} /> {/* CardMedia and CardContent inside component */}
+                              <RecordingControl selectedFile={selectedFile} onDataChanged={handleDataChanged} />
                           </Card>
                         </Grid>
                         <Grid size={{ xs: 12, md: 12 }}>

@@ -1,4 +1,4 @@
-from flask import request, jsonify, send_file, Response, send_from_directory
+from flask import request, jsonify, send_file, Response
 from config import app, db
 from models import Contact, User
 from video_streamer import VideoStreamer, CameraBusyException
@@ -12,9 +12,9 @@ import csv
 import os
 import time
 import threading
-from thread_report import report_gpiochip0_users
 import re
 from system_monitor import system_monitor
+#from thread_report import report_gpiochip0_users
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -240,12 +240,12 @@ def stop_sensor_loop():
 
 @app.route('/sensor/status', methods=['GET'])
 def sensor_status():
-    cal_status = calibrate_status()
     return jsonify({"running": sensor.sensor_thread_running,
                     "last_calibration":calibration_ratio}), 200
 
 @app.route('/sensor/value', methods=['GET'])
 def sensor_value():
+    global sensor_thread
     if not sensor.sensor_thread_event.is_set():
         return jsonify({"message": "Sensor is not running."}), 400
     value = sensor.get_sensor_value()

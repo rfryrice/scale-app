@@ -9,16 +9,10 @@ import { Typography, CardMedia, CardContent } from "@mui/material";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-function VideoControl({ selectedFile }) {
-  const [videoStatus, setVideoStatus] = useState({
-    running: false,
-    mode: null,
-    filename: null,
-  });
+function VideoControl({ selectedFile, videoStatus, recordStartTime, onStartVideo }) {
   const [error, setError] = useState("");
   const [polling, setPolling] = useState(false);
   const [filename, setFilename] = useState("");
-  const [recordStartTime, setRecordStartTime] = useState(null);
   const [recordRuntime, setRecordRuntime] = useState("00:00:00");
   const intervalRef = useRef(null);
   const runtimeIntervalRef = useRef(null);
@@ -34,7 +28,7 @@ function VideoControl({ selectedFile }) {
       const fetchStatus = async () => {
         try {
           const res = await axios.get(`${API_URL}/video/status`);
-          setVideoStatus(res.data);
+          // Parent should update videoStatus, so just check running
           if (!res.data.running) setPolling(false);
         } catch (err) {
           setError("Failed to fetch video status");
@@ -48,113 +42,41 @@ function VideoControl({ selectedFile }) {
 
   // Track recording runtime and handle midnight rollover, interrupt on error
   useEffect(() => {
-    if (videoStatus.running && videoStatus.mode === "record") {
-      if (!recordStartTime) {
-        setRecordStartTime(Date.now());
-      }
-      runtimeIntervalRef.current = setInterval(async () => {
-        if (recordStartTime) {
-          const now = new Date();
-          const start = new Date(recordStartTime);
-          const elapsed = Date.now() - recordStartTime;
-          const hours = Math.floor(elapsed / 3600000);
-          const minutes = Math.floor((elapsed % 3600000) / 60000);
-          const seconds = Math.floor((elapsed % 60000) / 1000);
-          setRecordRuntime(
-            `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
-          );
-          // Check for backend error (VideoStreamer)
-          try {
-            const statusRes = await axios.get(`${API_URL}/video/status`);
-            if (statusRes.data.error) {
-              setError(statusRes.data.error);
-              setPolling(false);
-              clearInterval(runtimeIntervalRef.current);
-              return;
-            }
-          } catch (err) {
-            setError(err.response?.data?.message || "VideoStreamer error.");
-            setPolling(false);
-            clearInterval(runtimeIntervalRef.current);
-            return;
-          }
-          // Check if midnight has passed
-          if (
-            start.getDate() !== now.getDate() ||
-            start.getMonth() !== now.getMonth() ||
-            start.getFullYear() !== now.getFullYear()
-          ) {
-            // Stop current recording and start a new one
-            try {
-              await axios.post(`${API_URL}/video/stop`);
-              // Wait a moment to ensure backend is ready
-              setTimeout(async () => {
-                const formatted = `${now.getFullYear()}-${String(
-                  now.getMonth() + 1
-                ).padStart(2, "0")}-${String(now.getDate()).padStart(
-                  2,
-                  "0"
-                )}_${String(now.getHours()).padStart(2, "0")}-${String(
-                  now.getMinutes()
-                ).padStart(2, "0")}-${String(now.getSeconds()).padStart(
-                  2,
-                  "0"
-                )}`;
-                const newFilename = `output_${formatted}.mp4`;
-                const res = await axios.post(`${API_URL}/video/start`, {
-                  mode: "record",
-                  filename: newFilename,
-                });
-                setVideoStatus(res.data);
-                setRecordStartTime(Date.now());
-                setRecordRuntime("00:00:00");
-                setFilename(newFilename);
-              }, 1000);
-            } catch (err) {
-              setError(
-                err.response?.data?.message ||
-                  "Failed to rollover recording at midnight."
-              );
-              setPolling(false);
-              clearInterval(runtimeIntervalRef.current);
-              return;
-            }
-          }
+    if (videoStatus?.running && videoStatus?.mode === "record" && recordStartTime) {
+      runtimeIntervalRef.current = setInterval(() => {
+        const now = new Date();
+        const start = new Date(recordStartTime);
+        const elapsed = Date.now() - recordStartTime;
+        const hours = Math.floor(elapsed / 3600000);
+        const minutes = Math.floor((elapsed % 3600000) / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        setRecordRuntime(
+          `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+        );
+        // Check if midnight has passed
+        if (
+          start.getDate() !== now.getDate() ||
+          start.getMonth() !== now.getMonth() ||
+          start.getFullYear() !== now.getFullYear()
+        ) {
+          setRecordRuntime("00:00:00");
         }
       }, 1000);
       return () => clearInterval(runtimeIntervalRef.current);
     } else {
-      setRecordStartTime(null);
       setRecordRuntime("00:00:00");
       clearInterval(runtimeIntervalRef.current);
     }
-  }, [videoStatus.running, videoStatus.mode, recordStartTime]);
+  }, [videoStatus?.running, videoStatus?.mode, recordStartTime]);
 
-  // Start livestream or recording
+  // Start livestream or recording using parent's handler
   const handleStart = async (mode) => {
     setError("");
     try {
-      const now = new Date(Date.now());
-      const formatted = `${now.getFullYear()}-${String(
-        now.getMonth() + 1
-      ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}_${String(
-        now.getHours()
-      ).padStart(2, "0")}-${String(now.getMinutes()).padStart(
-        2,
-        "0"
-      )}-${String(now.getSeconds()).padStart(2, "0")}`;
-      const body =
-        mode === "record"
-          ? { mode, filename: filename || `output_${formatted}.mp4` }
-          : { mode };
-      const res = await axios.post(`${API_URL}/video/start`, body);
-      setVideoStatus(res.data);
+      await onStartVideo && onStartVideo(mode, filename);
       setPolling(true);
-      if (mode === "record") {
-        setRecordStartTime(Date.now());
-      }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to start.");
+      setError("Failed to start.");
     }
   };
 
@@ -163,12 +85,10 @@ function VideoControl({ selectedFile }) {
     setError("");
     try {
       await axios.post(`${API_URL}/video/stop`);
-      setVideoStatus({ running: false, mode: null, filename: null });
       setPolling(false);
-      setRecordStartTime(null);
       setRecordRuntime("00:00:00");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to stop.");
+      setError("Failed to stop.");
     }
   };
 
