@@ -15,6 +15,7 @@ hx = None
 
 sensor_thread_event = threading.Event()
 sensor_thread_running = False  # <-- For status reporting
+latest_sensor_value = None
 
 calibration_state = {
     "in_progress": False,
