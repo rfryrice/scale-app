@@ -161,9 +161,9 @@ function SensorControl({ onDataChanged, onStartSensorAndVideo, videoStatus, reco
     try {
       const res = await onStartSensorAndVideo && onStartSensorAndVideo();
       if (res) {
-        const sensorMsg = res.sensor?.message || "Sensor status unknown.";
-        const videoMsg = res.video?.message || "Video status unknown.";
-        setConfirmationMsg(`${sensorMsg} Video: ${videoMsg}`);
+        const sensorMsg = res?.sensor?.message || "Sensor status unknown.";
+        const videoMsg = res?.video?.message || "Video status unknown.";
+        setConfirmationMsg(`Sensor: ${sensorMsg} Video: ${videoMsg}`);
         setSensorRunning(true);
       } else {
         setConfirmationMsg("Error starting sensor and video recording");
@@ -335,7 +335,7 @@ function SensorControl({ onDataChanged, onStartSensorAndVideo, videoStatus, reco
                 maxWidth: 260,
               }}
             >
-              Stop Sensor
+              {videoStatus?.running ? "Stop Sensor and Video" : "Stop Sensor"}
             </Button>
           )}
         </Box>

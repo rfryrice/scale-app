@@ -42,11 +42,14 @@ function VideoControl({ selectedFile, videoStatus, recordStartTime, onStartVideo
 
   // Track recording runtime and handle midnight rollover, interrupt on error
   useEffect(() => {
+    // Start runtime interval if recording is running and has a start time
     if (videoStatus?.running && videoStatus?.mode === "record" && recordStartTime) {
+      // Clear any previous interval
+      clearInterval(runtimeIntervalRef.current);
       runtimeIntervalRef.current = setInterval(() => {
-        const now = new Date();
-        const start = new Date(recordStartTime);
-        const elapsed = Date.now() - recordStartTime;
+        const now = Date.now();
+        const start = Number(recordStartTime);
+        const elapsed = now - start;
         const hours = Math.floor(elapsed / 3600000);
         const minutes = Math.floor((elapsed % 3600000) / 60000);
         const seconds = Math.floor((elapsed % 60000) / 1000);
@@ -54,10 +57,12 @@ function VideoControl({ selectedFile, videoStatus, recordStartTime, onStartVideo
           `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
         );
         // Check if midnight has passed
+        const startDate = new Date(start);
+        const nowDate = new Date(now);
         if (
-          start.getDate() !== now.getDate() ||
-          start.getMonth() !== now.getMonth() ||
-          start.getFullYear() !== now.getFullYear()
+          startDate.getDate() !== nowDate.getDate() ||
+          startDate.getMonth() !== nowDate.getMonth() ||
+          startDate.getFullYear() !== nowDate.getFullYear()
         ) {
           setRecordRuntime("00:00:00");
         }
