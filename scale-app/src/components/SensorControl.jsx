@@ -18,6 +18,7 @@ function SensorControl({ onDataChanged }) {
   const [sensorRunning, setSensorRunning] = useState(false);
   const [confirmationMsg, setConfirmationMsg] = useState("");
   const [csvFilename, setCsvFilename] = useState(null);
+  const [videoRuntime, setVideoRuntime] = useState(null); // New state for video runtime
   const [sensorValue, setSensorValue] = useState(null);
   const [lastCalibration, setLastCalibration] = useState(null);
 
@@ -152,12 +153,19 @@ function SensorControl({ onDataChanged }) {
       const videoMsg = res.data.video?.message || "Video status unknown.";
       setConfirmationMsg(`${sensorMsg} Video: ${videoMsg}`);
       setSensorRunning(true); // Start polling only after button click
+      // If backend returns runtime info, set it here
+      if (res.data.video?.runtime) {
+        setVideoRuntime(res.data.video.runtime);
+      } else {
+        setVideoRuntime(null);
+      }
     } catch (err) {
       console.error("Error starting sensor and video recording:", err);
       setConfirmationMsg(
         err?.response?.data?.message ||
           "Error starting sensor and video recording"
       );
+      setVideoRuntime(null);
     }
     setLoading(false);
   };
@@ -197,6 +205,12 @@ function SensorControl({ onDataChanged }) {
               Data saved to: <strong>{csvFilename}</strong>
             </div>
           )}
+        </Alert>
+      )}
+      {/* Pass videoRuntime to VideoControl if available */}
+      {videoRuntime && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Video runtime: {videoRuntime}
         </Alert>
       )}
       {status && status.message && (
