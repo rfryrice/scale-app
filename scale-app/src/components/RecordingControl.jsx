@@ -526,7 +526,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
             gap: 2,
             alignItems: "center",
             mb: 2,
-            justifyContent
+            justifyContent: "center",
           }}
         >
           <Button
