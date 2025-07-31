@@ -298,7 +298,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
         Recording Control
       </Typography>
       {/* Sensor Section */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 3 , justifyContent: 'center', alignItems: 'center' }}>
         <Typography
           variant="h3"
           sx={{ fontWeight: 600, mb: 1, color: "#90caf9" }}
@@ -325,6 +325,20 @@ function RecordingControl({ selectedFile, onDataChanged }) {
             {status.message}
           </Alert>
         )}
+        {syncLoading && <CircularProgress size={24} sx={{ ml: 2 }} />}
+              {syncMsg && (
+                <Alert
+                  severity={
+                    syncMsg.toLowerCase().includes("error")
+                      ? "error"
+                      : "success"
+                  }
+                  sx={{ mt: 2, width: "80%" }}
+                >
+                  {syncMsg}
+                </Alert>
+              )}
+            
         {loading && <CircularProgress size={32} sx={{ my: 2 }} />}
         {/* Calibration Steps */}
         {!status && (
@@ -381,7 +395,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
                 minWidth: 120,
                 boxShadow: 2,
                 width: "100%",
-                maxWidth: 180,
+                maxWidth: 240,
               }}
             >
               Tare (Zero Scale)
@@ -427,7 +441,6 @@ function RecordingControl({ selectedFile, onDataChanged }) {
               </Button>
             )}
             {/* Sync Button */}
-            <Box sx={{ mb: 2 }}>
               <Button
                 variant="contained"
                 color="warning"
@@ -446,20 +459,6 @@ function RecordingControl({ selectedFile, onDataChanged }) {
               >
                 Start Sensor & Video Recording
               </Button>
-              {syncLoading && <CircularProgress size={24} sx={{ ml: 2 }} />}
-              {syncMsg && (
-                <Alert
-                  severity={
-                    syncMsg.toLowerCase().includes("error")
-                      ? "error"
-                      : "success"
-                  }
-                  sx={{ mt: 2, width: "80%" }}
-                >
-                  {syncMsg}
-                </Alert>
-              )}
-            </Box>
           </Box>
         )}
         {status?.step === "place_weight" && (
@@ -527,6 +526,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
             gap: 2,
             alignItems: "center",
             mb: 2,
+            justifyContent
           }}
         >
           <Button
