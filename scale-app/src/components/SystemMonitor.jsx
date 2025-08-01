@@ -10,6 +10,7 @@ import {
   Title,
   Tooltip as ChartTooltip,
   Legend,
+  Filler
 } from "chart.js";
 
 ChartJS.register(
@@ -19,7 +20,8 @@ ChartJS.register(
   LineElement,
   Title,
   ChartTooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -114,11 +116,8 @@ export default function SystemMonitor() {
           display: 'flex',
           gap: 3,
           mb: 2,
-          flexDirection: {
-            xs: 'column',
-            sm: 'row',
-          },
-          alignItems: 'stretch',
+          flexDirection: 'row',
+          alignItems: 'flex-start',
           width: '100%',
           // Stack vertically if container < 280px
           '@media (max-width:280px)': {
