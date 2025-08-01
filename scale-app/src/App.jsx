@@ -173,15 +173,29 @@ function App() {
                     </Grid>
                     {/* Main content: Dashboard, SensorControl, VideoControl */}
                     <Grid size={{ xs: 12, md: 9 }}>
-                      <Grid container spacing={2} alignItems={"stretch"}>
-                        <Grid size={{ xs: 12, md: 7 }}>
-                          <Card sx={{ mb: 2, height: "100%" }}>
+                      <Grid container spacing={2} alignItems="stretch">
+                        <Grid size={{ xs: 12, md: 8 }}>
+                          <Card sx={{ height: "100%" }}>
                             <CardContent>
                               <Dashboard selectedFile={selectedFile} />
                             </CardContent>
                           </Card>
                         </Grid>
-                        <Grid size={{ xs: 12, md: 5 }}>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Card sx={{ height: "100%" }}>
+                            <CardContent>
+                              <SensorControl onDataChanged={handleDataChanged} />
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 8 }}>
+                          <Card sx={{ height: "100%" }}>
+                            <CardContent>
+                              <VideoControl />
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 4 }}>
                           <Card sx={{ height: "100%" }}>
                             <CardContent>
                               <SystemMonitor />
