@@ -64,9 +64,7 @@ const TopBar = ({ setIsSidebar, onDrawerOpen, username, onLogout }) => {
             }
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M12 2v20m0 0l-6-6m6 6l6-6" />
-          </svg>
+          <NotificationsOutlinedIcon />
         </IconButton>
         <IconButton onClick={colorMode.toggleColorMode}>
           {theme.palette.mode === "dark" ? (
@@ -74,9 +72,6 @@ const TopBar = ({ setIsSidebar, onDrawerOpen, username, onLogout }) => {
           ) : (
             <LightModeOutlinedIcon />
           )}
-        </IconButton>
-        <IconButton>
-          <NotificationsOutlinedIcon />
         </IconButton>
         <IconButton>
           <SettingsOutlinedIcon />
