@@ -51,7 +51,7 @@ function Dashboard({ selectedFile }) {
 const maData = movingAverage(yData, 5)
 
   return (
-    <div style={{ minWidth: 600}}>
+    <div style={{ width: "100%" }}>
       <Typography variant="h2" gutterBottom>Data Plot</Typography>
       {filename && (
         <div style={{ marginBottom: "1rem" }}>
@@ -84,7 +84,7 @@ const maData = movingAverage(yData, 5)
                 color: "#ff9100",
               },
             ]}
-            width={600}
+            width="100%"
             height={350}
           />
         ) : (
