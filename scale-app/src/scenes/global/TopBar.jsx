@@ -45,6 +45,29 @@ const TopBar = ({ setIsSidebar, onDrawerOpen, username, onLogout }) => {
 
       {/* ICONS */}
       <Box display="flex">
+        <IconButton
+          color="inherit"
+          onClick={async () => {
+            try {
+              const res = await fetch(
+                `${import.meta.env.VITE_API_URL}/git/pull`,
+                { method: "POST" }
+              );
+              const data = await res.json();
+              alert(
+                data.success
+                  ? `Git Pull Success:\n${data.output}`
+                  : `Git Pull Failed:\n${data.error}`
+              );
+            } catch (err) {
+              alert("Error running git pull");
+            }
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 2v20m0 0l-6-6m6 6l6-6" />
+          </svg>
+        </IconButton>
         <IconButton onClick={colorMode.toggleColorMode}>
           {theme.palette.mode === "dark" ? (
             <DarkModeOutlinedIcon />
@@ -62,20 +85,20 @@ const TopBar = ({ setIsSidebar, onDrawerOpen, username, onLogout }) => {
           <PersonOutlinedIcon />
         </IconButton>
         <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-            >
-              <MenuItem disabled>{username}</MenuItem>
-              <MenuItem
-                onClick={() => {
-                  handleClose();
-                  onLogout();
-                }}
-              >
-                Log out
-              </MenuItem>
-            </Menu>
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleClose}
+        >
+          <MenuItem disabled>{username}</MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleClose();
+              onLogout();
+            }}
+          >
+            Log out
+          </MenuItem>
+        </Menu>
       </Box>
     </Box>
   );

@@ -15,6 +15,7 @@ import threading
 import re
 from system_monitor import system_monitor
 #from thread_report import report_gpiochip0_users
+import subprocess
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -467,6 +468,20 @@ def start_sensor_and_video():
     print(f"[DEBUG] Sensor response: {sensor_response}")
     print(f"[DEBUG] Video response: {video_resp}")
     return jsonify({"sensor": sensor_response, "video": video_resp}), 200
+
+@app.route('/git/pull', methods=['POST'])
+def git_pull_feature():
+    try:
+        result = subprocess.run(
+            ["git", "pull", "origin", "feature"],
+            cwd=os.path.dirname(__file__),
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return jsonify({"success": True, "output": result.stdout}), 200
+    except subprocess.CalledProcessError as e:
+        return jsonify({"success": False, "error": e.stderr}), 500
 
 
 if __name__ == "__main__":
