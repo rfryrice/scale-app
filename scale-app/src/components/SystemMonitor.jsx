@@ -120,20 +120,43 @@ export default function SystemMonitor() {
           },
           alignItems: 'stretch',
           width: '100%',
+          // Stack vertically if container < 280px
           '@media (max-width:280px)': {
             flexDirection: 'column',
             gap: 2,
           },
         }}
       >
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box
+          sx={{
+            flex: 1,
+            minWidth: 240,
+            width: '100%',
+            boxSizing: 'border-box',
+            '@media (max-width:280px)': {
+              minWidth: 0,
+              width: '100%',
+            },
+          }}
+        >
           <Typography variant="subtitle2" sx={{ color: '#90caf9', fontWeight: 600 }}>CPU</Typography>
           <Typography variant="h4" sx={{ color: '#1976d2', fontWeight: 700, mb: 0 }}>{data.cpu_percent}%</Typography>
           <Box sx={{ height: 48, mt: 0.5 }}>
             <Line data={cpuChartData} options={chartOptions} height={48} />
           </Box>
         </Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box
+          sx={{
+            flex: 1,
+            minWidth: 240,
+            width: '100%',
+            boxSizing: 'border-box',
+            '@media (max-width:280px)': {
+              minWidth: 0,
+              width: '100%',
+            },
+          }}
+        >
           <Typography variant="subtitle2" sx={{ color: '#f48fb1', fontWeight: 600 }}>RAM</Typography>
           <Typography variant="h4" sx={{ color: '#d32f2f', fontWeight: 700, mb: 0 }}>{data.ram_percent}%</Typography>
           <Typography variant="body2" sx={{ color: '#bbb', fontSize: 13, mb: 0.5 }}>

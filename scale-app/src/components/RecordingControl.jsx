@@ -285,9 +285,6 @@ function RecordingControl({ selectedFile, onDataChanged }) {
   return (
     <Box
       sx={{
-        background: "#181818",
-        borderRadius: 2,
-        boxShadow: 2,
         p: 3,
         maxWidth: "90%",
         margin: "0 auto",
@@ -367,16 +364,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
                   color="primary"
                   onClick={startCalibrate}
                   disabled={loading || sensorRunning}
-                  sx={{
-                    px: 2,
-                    py: 1.5,
-                    fontSize: "1.15rem",
-                    borderRadius: 3,
-                    minWidth: 120,
-                    boxShadow: 2,
-                    width: "100%",
-                    maxWidth: 180,
-                  }}
+                  className="recording-btn"
                 >
                   Calibrate
                 </Button>
@@ -387,75 +375,35 @@ function RecordingControl({ selectedFile, onDataChanged }) {
               color="info"
               onClick={tareSensor}
               disabled={loading}
-              sx={{
-                px: 2,
-                py: 1.5,
-                fontSize: "1.15rem",
-                borderRadius: 3,
-                minWidth: 120,
-                boxShadow: 2,
-                width: "100%",
-                maxWidth: 240,
-              }}
+              className="recording-btn"
             >
               Tare (Zero Scale)
             </Button>
-            {!sensorRunning && (
-              <Button
-                variant="contained"
-                color="success"
-                onClick={startSensorLoop}
-                disabled={loading}
-                sx={{
-                  px: 2,
-                  py: 1.5,
-                  fontSize: "1.15rem",
-                  borderRadius: 3,
-                  minWidth: 120,
-                  boxShadow: 2,
-                  width: "100%",
-                  maxWidth: 180,
-                }}
-              >
-                Start Sensor
-              </Button>
-            )}
-            {sensorRunning && (
-              <Button
-                variant="contained"
-                color="error"
-                onClick={stopSensorLoop}
-                disabled={loading}
-                sx={{
-                  px: 2,
-                  py: 1.5,
-                  fontSize: "1.15rem",
-                  borderRadius: 3,
-                  minWidth: 120,
-                  boxShadow: 2,
-                  width: "100%",
-                  maxWidth: 180,
-                }}
-              >
-                Stop Sensor
-              </Button>
-            )}
+            <Button
+              variant="contained"
+              color="success"
+              onClick={startSensorLoop}
+              disabled={loading}
+              className="recording-btn"
+            >
+              Start Sensor
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={stopSensorLoop}
+              disabled={loading}
+              className="recording-btn"
+            >
+              Stop Sensor
+            </Button>
             {/* Sync Button */}
               <Button
                 variant="contained"
                 color="warning"
                 onClick={handleSyncStart}
                 disabled={syncLoading || sensorRunning || videoStatus.running}
-                sx={{
-                  px: 2,
-                  py: 1.5,
-                  fontSize: "1.15rem",
-                  borderRadius: 3,
-                  minWidth: 120,
-                  boxShadow: 2,
-                  width: "100%",
-                  maxWidth: 180,
-                }}
+                className="recording-btn"
               >
                 Start Sensor & Video Recording
               </Button>
@@ -534,16 +482,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
             color="primary"
             onClick={() => handleStartVideo("livestream")}
             disabled={videoStatus.running}
-            sx={{
-              px: 2,
-              py: 1.5,
-              fontSize: "1.15rem",
-              borderRadius: 3,
-              minWidth: 120,
-              boxShadow: 2,
-              width: "100%",
-              maxWidth: 180,
-            }}
+            className="recording-btn"
           >
             Start Livestream
           </Button>
@@ -552,16 +491,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
             color="secondary"
             onClick={() => handleStartVideo("record")}
             disabled={videoStatus.running}
-            sx={{
-              px: 2,
-              py: 1.5,
-              fontSize: "1.15rem",
-              borderRadius: 3,
-              minWidth: 120,
-              boxShadow: 2,
-              width: "100%",
-              maxWidth: 180,
-            }}
+            className="recording-btn"
           >
             Start Recording
           </Button>
@@ -569,16 +499,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
             variant="contained"
             onClick={handleStopVideo}
             disabled={!videoStatus.running}
-            sx={{
-              px: 2,
-              py: 1.5,
-              fontSize: "1.15rem",
-              borderRadius: 3,
-              minWidth: 120,
-              boxShadow: 2,
-              width: "100%",
-              maxWidth: 180,
-            }}
+            className="recording-btn"
           >
             Stop
           </Button>
