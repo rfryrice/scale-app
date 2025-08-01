@@ -184,20 +184,6 @@ function App() {
                         <Grid size={{ xs: 12, md: 4 }}>
                           <Card sx={{ height: "100%" }}>
                             <CardContent>
-                              <SensorControl onDataChanged={handleDataChanged} />
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 8 }}>
-                          <Card sx={{ height: "100%" }}>
-                            <CardContent>
-                              <VideoControl />
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 4 }}>
-                          <Card sx={{ height: "100%" }}>
-                            <CardContent>
                               <SystemMonitor />
                             </CardContent>
                           </Card>
