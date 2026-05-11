@@ -253,7 +253,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
     setSyncLoading(true);
     setSyncMsg("");
     try {
-      const res = await axios.post(`${API_URL}/sync/start`);
+      const res = await axios.post(`${API_URL}/sync/start`, {});
       setSyncMsg(res.data.message || "Sensor and video recording started.");
       setSensorRunning(true);
       setVideoStatus({
