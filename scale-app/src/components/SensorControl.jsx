@@ -6,51 +6,64 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import SevenSegmentDisplay from "./SevenSegmentDisplay";
 import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-function SensorControl({ onDataChanged }) {
+function SensorControl({ onDataChanged, onStartSensorAndVideo, videoStatus, recordStartTime }) {
   const [status, setStatus] = useState(null); // Calibration status
   const [loading, setLoading] = useState(false);
   const [knownWeight, setKnownWeight] = useState("");
   const [sensorRunning, setSensorRunning] = useState(false);
   const [confirmationMsg, setConfirmationMsg] = useState("");
   const [csvFilename, setCsvFilename] = useState(null);
+  // Remove local videoRuntime state, use recordStartTime from parent
   const [sensorValue, setSensorValue] = useState(null);
   const [lastCalibration, setLastCalibration] = useState(null);
 
-  // Check sensor running status on mount and after calibration
+  // Tare the sensor
+  const tareSensor = async () => {
+    setLoading(true);
+    setConfirmationMsg("");
+    try {
+      const res = await axios.post(`${API_URL}/sensor/tare`);
+      setConfirmationMsg(res.data.message || "Sensor tared (zeroed).");
+    } catch (err) {
+      setConfirmationMsg(
+        err?.response?.data?.message || "Error taring sensor"
+      );
+    }
+    setLoading(false);
+  };
+
+  // Only check calibration ratio on mount
   useEffect(() => {
     axios
       .get(`${API_URL}/sensor/status`)
       .then((res) => {
-        setSensorRunning(res.data.running);
         setLastCalibration(res.data.last_calibration);
       })
       .catch(() => {
-        setSensorRunning(false);
         setLastCalibration(null);
       });
   }, []);
 
-  // Poll sensor value when running
+  // Poll sensor value only after sensor is started
   useEffect(() => {
     let intervalId;
     if (sensorRunning) {
-      // Fetch sensor value every 500ms
       intervalId = setInterval(() => {
         axios
           .get(`${API_URL}/sensor/value`)
           .then((res) => {
             let val = res.data.value;
             if (typeof val === "number") {
-              setSensorValue(val.toFixed(2)); // Format to 2 decimal places
-            } else setSensorValue(val); // Handle unexpected response
+              setSensorValue(val.toFixed(2));
+            } else setSensorValue(val);
           })
           .catch(() => setSensorValue(null));
       }, 500);
-    } else {
-      setSensorValue(null);
     }
     return () => clearInterval(intervalId);
   }, [sensorRunning]);
@@ -129,7 +142,7 @@ function SensorControl({ onDataChanged }) {
     setCsvFilename(null);
     try {
       const res = await axios.post(`${API_URL}/sensor/start`);
-      setSensorRunning(true);
+      setSensorRunning(true); // Start polling only after button click
       setConfirmationMsg(res.data.message);
     } catch (err) {
       setConfirmationMsg(
@@ -140,6 +153,26 @@ function SensorControl({ onDataChanged }) {
   };
 
   // Stop sensor data logging
+  // Use parent's handler for starting sensor+video
+  const startSensorAndVideo = async () => {
+    setLoading(true);
+    setConfirmationMsg("");
+    setCsvFilename(null);
+    try {
+      const res = await onStartSensorAndVideo && onStartSensorAndVideo();
+      if (res) {
+        const sensorMsg = res?.sensor?.message || "Sensor status unknown.";
+        const videoMsg = res?.video?.message || "Video status unknown.";
+        setConfirmationMsg(`Sensor: ${sensorMsg} Video: ${videoMsg}`);
+        setSensorRunning(true);
+      } else {
+        setConfirmationMsg("Error starting sensor and video recording");
+      }
+    } catch (err) {
+      setConfirmationMsg("Error starting sensor and video recording");
+    }
+    setLoading(false);
+  };
   const stopSensorLoop = async () => {
     setLoading(true);
     setCsvFilename(null);
@@ -159,15 +192,17 @@ function SensorControl({ onDataChanged }) {
 
   // Render calibration flow UI
   return (
-    <div style={{ minWidth: 300 }}>
-      <h2>Sensor Control</h2>
+    <div>
+      <Typography variant="h2" gutterBottom>
+        Sensor Control
+      </Typography>
       {sensorRunning && (
         <div style={{ marginBottom: 16 }}>
           <SevenSegmentDisplay value={sensorValue} />
         </div>
       )}
       {confirmationMsg && (
-        <Alert severity="success" sx={{ mb: 2 }}>
+        <Alert severity="success" sx={{ mb: 2, width: '80%' }}>
           {confirmationMsg}
           {csvFilename && (
             <div>
@@ -176,6 +211,7 @@ function SensorControl({ onDataChanged }) {
           )}
         </Alert>
       )}
+      {/* SensorControl does not display video runtime. VideoControl will handle runtime and filename display when recording is active. */}
       {status && status.message && (
         <Alert severity={status.step === "error" ? "error" : "info"}>
           {status.message}
@@ -184,7 +220,16 @@ function SensorControl({ onDataChanged }) {
       {loading && <CircularProgress size={32} sx={{ my: 2 }} />}
       {/* Calibration Steps */}
       {!status && (
-        <>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: { xs: 2, md: 3 },
+            alignItems: "center",
+            mt: 2,
+            mb: 2,
+          }}
+        >
           <Tooltip
             title={
               lastCalibration !== null
@@ -200,20 +245,77 @@ function SensorControl({ onDataChanged }) {
                 color="primary"
                 onClick={startCalibrate}
                 disabled={loading || sensorRunning}
-                sx={{ mr: 2 }}
+                sx={{
+                  px: { xs: 2, md: 3 },
+                  py: { xs: 1, md: 1.5 },
+                  fontSize: { xs: "1rem", md: "1.15rem" },
+                  borderRadius: { xs: 2, md: 3 },
+                  minWidth: 120,
+                  boxShadow: 2,
+                  width: "100%",
+                  maxWidth: 260,
+                }}
               >
                 Calibrate
               </Button>
             </span>
           </Tooltip>
+          <Button
+            variant="contained"
+            color="info"
+            onClick={tareSensor}
+            disabled={loading}
+            sx={{
+              px: { xs: 2, md: 3 },
+              py: { xs: 1, md: 1.5 },
+              fontSize: { xs: "1rem", md: "1.15rem" },
+              borderRadius: { xs: 2, md: 3 },
+              minWidth: 120,
+              boxShadow: 2,
+              width: "100%",
+              maxWidth: 260,
+            }}
+          >
+            Tare (Zero Scale)
+          </Button>
           {!sensorRunning && (
             <Button
               variant="contained"
               color="success"
               onClick={startSensorLoop}
               disabled={loading}
+              sx={{
+                px: { xs: 2, md: 3 },
+                py: { xs: 1, md: 1.5 },
+                fontSize: { xs: "1rem", md: "1.15rem" },
+                borderRadius: { xs: 2, md: 3 },
+                minWidth: 120,
+                boxShadow: 2,
+                width: "100%",
+                maxWidth: 260,
+              }}
             >
               Start Sensor
+            </Button>
+          )}
+          {!sensorRunning && (
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={startSensorAndVideo}
+              disabled={loading}
+              sx={{
+                px: { xs: 2, md: 3 },
+                py: { xs: 1, md: 1.5 },
+                fontSize: { xs: "1rem", md: "1.15rem" },
+                borderRadius: { xs: 2, md: 3 },
+                minWidth: 120,
+                boxShadow: 2,
+                width: "100%",
+                maxWidth: 260,
+              }}
+            >
+              Start Sensor & Video
             </Button>
           )}
           {sensorRunning && (
@@ -222,12 +324,21 @@ function SensorControl({ onDataChanged }) {
               color="error"
               onClick={stopSensorLoop}
               disabled={loading}
-              sx={{ ml: 2 }}
+              sx={{
+                px: { xs: 2, md: 3 },
+                py: { xs: 1, md: 1.5 },
+                fontSize: { xs: "1rem", md: "1.15rem" },
+                borderRadius: { xs: 2, md: 3 },
+                minWidth: 120,
+                boxShadow: 2,
+                width: "100%",
+                maxWidth: 260,
+              }}
             >
-              Stop Sensor
+              {videoStatus?.running ? "Stop Sensor and Video" : "Stop Sensor"}
             </Button>
           )}
-        </>
+        </Box>
       )}
       {status?.step === "place_weight" && (
         <Button

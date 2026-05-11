@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { LineChart } from '@mui/x-charts/LineChart';
+import { Typography } from '@mui/material';
 
 // Display graph data
 
@@ -34,7 +35,7 @@ function Dashboard({ selectedFile }) {
   const [filename, setFilename] = useState(selectedFile);
 
   useEffect(() => {
-    if (!selectedFile) return;
+    if (!selectedFile || !selectedFile.endsWith('.csv')) return;
     setFilename(selectedFile);
     axios
       .get(`${API_URL}/dashboard?file=${encodeURIComponent(selectedFile)}`)
@@ -50,43 +51,47 @@ function Dashboard({ selectedFile }) {
 const maData = movingAverage(yData, 5)
 
   return (
-    <div style={{ minWidth: 600}}>
-      <h2>Data Plot</h2>
+    <div style={{ width: "100%" }}>
+      <Typography variant="h2" gutterBottom>Data Plot</Typography>
       {filename && (
         <div style={{ marginBottom: "1rem" }}>
           File: <strong>{filename}</strong>
         </div>
       )}
-      {xData.length > 0 ? (
-        <LineChart
-          xAxis={[
-            {
-              data: xData,
-              label: "Timestamp",
-              scaleType: "time",
-              valueFormatter: (date) => {
-                if (!(date instanceof Date) || isNaN(date)) return "";
-                return date.toLocaleString();
+      {filename && filename.endsWith('.csv') ? (
+        xData.length > 0 ? (
+          <LineChart
+            xAxis={[
+              {
+                data: xData,
+                label: "Timestamp",
+                scaleType: "time",
+                valueFormatter: (date) => {
+                  if (!(date instanceof Date) || isNaN(date)) return "";
+                  return date.toLocaleString();
+                },
               },
-            },
-          ]}
-          series={[
-            {
-              data: yData,
-              label: "Value",
-              color: "#4254fb"
-            },
-            {
-              data: maData,
-              label: "5-point Moving Avg",
-              color: "#ff9100",
-            },
-          ]}
-          width={600}
-          height={350}
-        />
+            ]}
+            series={[
+              {
+                data: yData,
+                label: "Value",
+                color: "#4254fb"
+              },
+              {
+                data: maData,
+                label: "5-point Moving Avg",
+                color: "#ff9100",
+              },
+            ]}
+            width="100%"
+            height={350}
+          />
+        ) : (
+          <div>No data available for this file.</div>
+        )
       ) : (
-        <div>No data available for this file.</div>
+        <div>Select a CSV file to view the data plot.</div>
       )}
       <div style={{ marginTop: "1em", fontSize: "0.9em", color: "#888" }}>
         Purple: Original Value &nbsp;|&nbsp; Orange: 5-point Moving Average

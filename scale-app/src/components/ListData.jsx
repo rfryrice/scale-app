@@ -1,58 +1,88 @@
 import React, { useEffect, useState } from "react";
+import {
+  Tabs,
+  Tab,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Typography,
+  Button,
+} from "@mui/material";
 import axios from "axios";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import ListItemButton from "@mui/material/ListItemButton"
-import Paper from "@mui/material/Paper";
-import Typography from "@mui/material/Typography";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-function ListData({ onFileSelect, selectedFile }) {
+export default function ListData({ onFileSelect, selectedFile }) {
+  const [tab, setTab] = useState(0);
   const [files, setFiles] = useState([]);
-  const [error, setError] = useState("");
 
   useEffect(() => {
-    axios
-      .get(`${API_URL}/list-csv`)
-      .then((res) => setFiles(res.data.files))
-      .catch((err) => setError(err.message));
-  }, []);
+    const fetchFiles = async () => {
+      const res = await axios.get(`${API_URL}/list-files`);
+      if (tab === 0) {
+        setFiles(res.data.csv_files || []);
+      } else {
+        setFiles(res.data.mp4_files || []);
+      }
+    };
+    fetchFiles();
+  }, [tab]);
 
-  const handleClick = (filename) => {
-    if (onFileSelect) {
-      onFileSelect(filename);
-    }
-  };
+  const handleTabChange = (event, newValue) => setTab(newValue);
 
   return (
-    <Paper elevation={3} sx={{ p: 2, maxWidth: 400, margin: "2rem auto" }}>
-      <Typography variant="h6" gutterBottom>
-        CSV Files in Data Directory
+    <div>
+      <Typography variant="h2" gutterBottom>
+        Files
       </Typography>
-      {error && <Typography color="error">{error}</Typography>}
+      <Tabs value={tab} onChange={handleTabChange} centered>
+        <Tab label="Data (.csv)" />
+        <Tab label="Videos (.mp4)" />
+      </Tabs>
       <List>
-        {files.length === 0 ? (
-          <ListItem>
-            <ListItemText primary="No CSV files found." />
-          </ListItem>
-        ) : (
-          files.map((file, idx) => (
-            <ListItem key={idx} disablePadding>
-              <ListItemButton 
-                component="a"
-                onClick={() => handleClick(file)}
-                selected={file === selectedFile}
-              >           
-                <ListItemText primary={file} />
+        {files.map((file) => {
+          // Determine download URL
+          let downloadUrl = "";
+          let displayName = file;
+          if (tab === 0) {
+            // CSV files are in the data directory
+            downloadUrl = `${API_URL}/data/${file}`;
+          } else {
+            // MP4 files are in the data/videos directory
+            downloadUrl = `${API_URL}/data/${file}`;
+            // Remove 'videos/' prefix for display
+            if (file.startsWith("videos/")) {
+              displayName = file.replace(/^videos\//, "");
+            }
+          }
+          return (
+            <ListItem key={file} disablePadding
+              secondaryAction={
+                selectedFile === file ? (
+                  <a href={downloadUrl} download style={{ textDecoration: "none" }}>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      size="small"
+                      sx={{ ml: 1 }}
+                    >
+                      Download
+                    </Button>
+                  </a>
+                ) : null
+              }
+            >
+              <ListItemButton
+                selected={selectedFile === file}
+                onClick={() => onFileSelect(file)}
+              >
+                <ListItemText primary={displayName} />
               </ListItemButton>
             </ListItem>
-          ))
-        )}
+          );
+        })}
       </List>
-    </Paper>
+    </div>
   );
 }
-
-export default ListData;
