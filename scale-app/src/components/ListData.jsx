@@ -39,7 +39,7 @@ export default function ListData({ onFileSelect, selectedFile }) {
   const handleTabChange = (event, newValue) => setTab(newValue);
 
   return (
-    <div>
+    <div style={{ height: "100%", overflow: "auto", display: "flex", flexDirection: "column" }}>
       <Typography variant="h2" gutterBottom>
         Files
       </Typography>

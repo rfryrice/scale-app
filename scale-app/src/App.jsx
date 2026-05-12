@@ -158,15 +158,15 @@ function App() {
             <div className="dashboard-layout">
               {isLoggedIn ? (
                 <>
-                  <Grid container spacing={2}>
-                    {/* Sidebar: ListData spans 2 rows on md+ */}
-                    <Grid size={{ xs: 12, md: 3 }}>
-                      <Card sx={{ height: { md: "100%" } }}>
-                        <CardContent>
+                  <Grid container spacing={2} sx={{ height: "calc(100vh - 200px)" }}>
+                    <Grid item xs={12} md={3} sx={{ height: "100%" }}>
+                      <Card sx={{ height: "100%" }}>
+                        <CardContent sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
                           <ListData
                             key={listKey}
                             onFileSelect={handleFileSelect}
                             selectedFile={selectedFile}
+                            style={{ height: "100%" }}
                           />
                         </CardContent>
                       </Card>
