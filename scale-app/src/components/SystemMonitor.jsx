@@ -117,7 +117,7 @@ export default function SystemMonitor() {
           gap: 3,
           mb: 2,
           flexDirection: 'row',
-          alignItems: 'flex-start',
+          alignItems: 'stretch',
           width: '100%',
           // Stack vertically if container < 280px
           '@media (max-width:280px)': {
@@ -129,29 +129,31 @@ export default function SystemMonitor() {
         <Box
           sx={{
             flex: 1,
-            minWidth: 240,
+            minWidth: 0,
             width: '100%',
             boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
             '@media (max-width:280px)': {
-              minWidth: 0,
               width: '100%',
             },
           }}
         >
           <Typography variant="subtitle2" sx={{ color: '#90caf9', fontWeight: 600 }}>CPU</Typography>
           <Typography variant="h4" sx={{ color: '#1976d2', fontWeight: 700, mb: 0 }}>{data.cpu_percent}%</Typography>
-          <Box sx={{ height: 48, mt: 0.5 }}>
-            <Line data={cpuChartData} options={chartOptions} height={48} />
+          <Box sx={{ flex: 1, minHeight: 48, mt: 0.5 }}>
+            <Line data={cpuChartData} options={chartOptions} />
           </Box>
         </Box>
         <Box
           sx={{
             flex: 1,
-            minWidth: 240,
+            minWidth: 0,
             width: '100%',
             boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
             '@media (max-width:280px)': {
-              minWidth: 0,
               width: '100%',
             },
           }}
@@ -161,8 +163,8 @@ export default function SystemMonitor() {
           <Typography variant="body2" sx={{ color: '#bbb', fontSize: 13, mb: 0.5 }}>
             {Math.round(data.ram_used / 1024 / 1024)} MB / {Math.round(data.ram_total / 1024 / 1024)} MB
           </Typography>
-          <Box sx={{ height: 48, mt: 0.5 }}>
-            <Line data={ramChartData} options={chartOptions} height={48} />
+          <Box sx={{ flex: 1, minHeight: 48, mt: 0.5 }}>
+            <Line data={ramChartData} options={chartOptions} />
           </Box>
         </Box>
       </Box>
