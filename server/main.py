@@ -93,15 +93,25 @@ def login():
 @app.route("/list-files", methods=["GET"])
 def list_files():
     os.makedirs(DATA_DIR, exist_ok=True)
-    csv_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.csv')]
+
+    def file_entry(full_path, relative_name):
+        size = os.path.getsize(full_path) if os.path.isfile(full_path) else 0
+        return {"name": relative_name, "size": size}
+
+    csv_files = [
+        file_entry(os.path.join(DATA_DIR, f), f)
+        for f in os.listdir(DATA_DIR)
+        if f.endswith('.csv')
+    ]
 
     videos_dir = os.path.join(DATA_DIR, "videos")
     os.makedirs(videos_dir, exist_ok=True)
     mp4_files = [
-        os.path.join("videos", f)
+        file_entry(os.path.join(videos_dir, f), os.path.join("videos", f))
         for f in os.listdir(videos_dir)
         if f.endswith('.mp4')
     ]
+
     return jsonify({"csv_files": csv_files, "mp4_files": mp4_files})
 
 
@@ -236,9 +246,12 @@ def api_calibrate_set_known_weight():
 
 @app.route('/video/status', methods=['GET'])
 def video_status():
-    return jsonify({"running": video_streamer is not None,
-                    "mode": video_mode,
-                    "filename": video_filename}), 200
+    return jsonify({
+        "running": video_streamer is not None,
+        "mode": video_mode,
+        "filename": video_filename,
+        "compressing": video_streamer.compressing if video_streamer is not None else False,
+    }), 200
 
 
 @app.route('/video/start', methods=['POST'])

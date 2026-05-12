@@ -20,6 +20,7 @@ class VideoStreamer:
         self.picam2.configure(preview_config)
         self.picam2.start()
         self.recording = False
+        self.compressing = False   # True while background H.265 encode is running
         self.frame = None
         self.lock = threading.Lock()
         self.running = True
@@ -27,7 +28,6 @@ class VideoStreamer:
         self.recording_encoder = None
         self.thread = threading.Thread(target=self._update_frame, daemon=True)
         self.thread.start()
-        print(f"[DEBUG] VideoStreamer thread started: {self.thread.is_alive()}")
 
     def _update_frame(self):
         while self.running:
@@ -75,57 +75,60 @@ class VideoStreamer:
         print(f"[DEBUG] start_recording finished. self.recording={self.recording} | thread alive: {self.thread.is_alive()}")
 
     def stop_recording(self):
-        print(f"[DEBUG] stop_recording called. self.recording={self.recording} | thread alive: {self.thread.is_alive()}")
         if self.recording:
             try:
                 if self.recording_encoder:
                     self.picam2.stop_encoder(self.recording_encoder)
                     self.recording_encoder = None
-                
                 self.recording = False
-                
-                # Convert H.264 to web-compatible MP4 using ffmpeg
+
+                # Kick off H.265 compression in background so the API responds immediately
                 if self.record_filename and os.path.exists(self.record_filename):
-                    self._convert_to_web_mp4(self.record_filename)
-                    
-                print(f"[DEBUG] Recording stopped and converted: {self.record_filename}")
-                
+                    t = threading.Thread(
+                        target=self._compress_to_h265,
+                        args=(self.record_filename,),
+                        daemon=True
+                    )
+                    t.start()
+
             except Exception as e:
                 print(f"[ERROR] Error stopping recording: {e}")
                 self.recording = False
-                
-        print(f"[DEBUG] After stop_recording: self.recording={self.recording} | thread alive: {self.thread.is_alive()}")
-    
-    def _convert_to_web_mp4(self, h264_file):
-        """Convert H.264 file to web-compatible MP4"""
+
+    def _compress_to_h265(self, source_path):
+        """Re-encode source file to H.265/HEVC in a background thread.
+
+        Uses CRF 28 with the fast preset — roughly half the file size of
+        H.264 Quality.HIGH at 640x480 with no perceptible quality loss.
+        The original file is replaced atomically on success.
+        """
+        self.compressing = True
+        temp_path = source_path + ".h265.tmp"
         try:
-            mp4_file = h264_file.replace('.h264', '.mp4') if h264_file.endswith('.h264') else h264_file
-            temp_mp4 = mp4_file + '.tmp'
-            
-            # Use ffmpeg to create web-compatible MP4
             cmd = [
-                'ffmpeg', '-y',
-                '-i', h264_file,
-                '-c:v', 'copy',  # Copy video stream (already H.264)
-                '-movflags', 'faststart',  # Move metadata to beginning for web streaming
-                '-f', 'mp4',
-                temp_mp4
+                "ffmpeg", "-y",
+                "-i", source_path,
+                "-c:v", "libx265",
+                "-crf", "28",
+                "-preset", "fast",
+                "-tag:v", "hvc1",          # broad browser/player compatibility
+                "-movflags", "+faststart",  # move metadata to front for streaming
+                temp_path,
             ]
-            
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode == 0:
-                # Replace original with converted file
-                os.replace(temp_mp4, mp4_file)
-                if h264_file != mp4_file and os.path.exists(h264_file):
-                    os.remove(h264_file)  # Clean up H.264 file
-                print(f"[DEBUG] Successfully converted to web-compatible MP4: {mp4_file}")
+                os.replace(temp_path, source_path)  # atomic swap
+                print(f"[INFO] H.265 compression complete: {source_path}")
             else:
-                print(f"[ERROR] ffmpeg conversion failed: {result.stderr}")
-                if os.path.exists(temp_mp4):
-                    os.remove(temp_mp4)
-                    
+                print(f"[ERROR] ffmpeg H.265 encode failed:\n{result.stderr}")
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
         except Exception as e:
-            print(f"[ERROR] Conversion error: {e}")
+            print(f"[ERROR] H.265 compression error: {e}")
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+        finally:
+            self.compressing = False
     
     def recording_completed_successfully(self):
         """Check if the last recording completed successfully and file is valid"""

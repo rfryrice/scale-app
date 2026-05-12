@@ -13,6 +13,13 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+function formatBytes(bytes) {
+  if (bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+}
+
 export default function ListData({ onFileSelect, selectedFile }) {
   const [tab, setTab] = useState(0);
   const [files, setFiles] = useState([]);
@@ -41,24 +48,21 @@ export default function ListData({ onFileSelect, selectedFile }) {
         <Tab label="Videos (.mp4)" />
       </Tabs>
       <List>
-        {files.map((file) => {
-          // Determine download URL
-          const downloadUrl = `${API_URL}/download?file=${encodeURIComponent(file)}`;
-          // Remove leading 'videos/' prefix for display
-          const displayName = file.startsWith("videos/")
-            ? file.replace(/^videos\//, "")
-            : file;
+        {files.map((entry) => {
+          const fileName = entry.name;
+          const fileSize = entry.size;
+          const downloadUrl = `${API_URL}/download?file=${encodeURIComponent(fileName)}`;
+          const displayName = fileName.startsWith("videos/")
+            ? fileName.replace(/^videos\//, "")
+            : fileName;
           return (
-            <ListItem key={file} disablePadding
+            <ListItem
+              key={fileName}
+              disablePadding
               secondaryAction={
-                selectedFile === file ? (
+                selectedFile === fileName ? (
                   <a href={downloadUrl} download style={{ textDecoration: "none" }}>
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      size="small"
-                      sx={{ ml: 1 }}
-                    >
+                    <Button variant="contained" color="secondary" size="small" sx={{ ml: 1 }}>
                       Download
                     </Button>
                   </a>
@@ -66,10 +70,17 @@ export default function ListData({ onFileSelect, selectedFile }) {
               }
             >
               <ListItemButton
-                selected={selectedFile === file}
-                onClick={() => onFileSelect(file)}
+                selected={selectedFile === fileName}
+                onClick={() => onFileSelect(fileName)}
               >
-                <ListItemText primary={displayName} />
+                <ListItemText
+                  primary={displayName}
+                  secondary={formatBytes(fileSize)}
+                  secondaryTypographyProps={{
+                    variant: "caption",
+                    sx: { color: "text.disabled", fontStyle: "italic" },
+                  }}
+                />
               </ListItemButton>
             </ListItem>
           );
