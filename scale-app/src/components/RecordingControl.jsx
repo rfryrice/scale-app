@@ -37,6 +37,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
   // Sync state
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
+  const [syncActive, setSyncActive] = useState(false);
 
   // Sensor polling
   useEffect(() => {
@@ -248,7 +249,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
     }
   };
 
-  // Sync handler
+  // Sync handlers
   const handleSyncStart = async () => {
     setSyncLoading(true);
     setSyncMsg("");
@@ -260,16 +261,37 @@ function RecordingControl({ selectedFile, onDataChanged }) {
       );
       setSyncMsg(res.data.message || "Sensor and video recording started.");
       setSensorRunning(true);
+      setSyncActive(true);
       setVideoStatus({
         running: true,
         mode: "record",
-        filename: res.data.filename || null,
+        filename: res.data.video?.filename || null,
       });
       setRecordStartTime(Date.now());
     } catch (err) {
       setSyncMsg(
         err?.response?.data?.message || "Error starting sync recording"
       );
+    }
+    setSyncLoading(false);
+  };
+
+  const handleSyncStop = async () => {
+    setSyncLoading(true);
+    setSyncMsg("");
+    try {
+      await Promise.all([
+        axios.post(`${API_URL}/sensor/stop`),
+        axios.post(`${API_URL}/video/stop`),
+      ]);
+      setSensorRunning(false);
+      setSyncActive(false);
+      setVideoStatus({ running: false, mode: null, filename: null });
+      setRecordRuntime("00:00:00");
+      setSyncMsg("Sensor and video recording stopped.");
+      if (onDataChanged) onDataChanged();
+    } catch (err) {
+      setSyncMsg(err?.response?.data?.message || "Error stopping sync recording");
     }
     setSyncLoading(false);
   };
@@ -298,6 +320,32 @@ function RecordingControl({ selectedFile, onDataChanged }) {
       <Typography variant="h2" sx={{ fontWeight: 700, mb: 2 }}>
         Recording Control
       </Typography>
+
+      {/* Recording uptime — visible whenever a recording is active */}
+      {videoStatus.running && videoStatus.mode === "record" && (
+        <Box
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 1.5,
+            mb: 2,
+            px: 2,
+            py: 1,
+            borderRadius: 1,
+            backgroundColor: "action.hover",
+          }}
+        >
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            Recording uptime
+          </Typography>
+          <Typography
+            variant="h5"
+            sx={{ fontFamily: "monospace", fontWeight: 700, color: "error.main" }}
+          >
+            {recordRuntime}
+          </Typography>
+        </Box>
+      )}
       {/* Sensor Section */}
       <Box sx={{ mb: 3 , justifyContent: 'center', alignItems: 'center' }}>
         <Typography
@@ -387,7 +435,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
               variant="contained"
               color="success"
               onClick={startSensorLoop}
-              disabled={loading}
+              disabled={loading || sensorRunning || syncActive}
               className="recording-btn"
             >
               Start Sensor
@@ -396,12 +444,24 @@ function RecordingControl({ selectedFile, onDataChanged }) {
               variant="contained"
               color="error"
               onClick={stopSensorLoop}
-              disabled={loading}
+              disabled={loading || !sensorRunning || syncActive}
               className="recording-btn"
             >
               Stop Sensor
             </Button>
-            {/* Sync Button */}
+            {/* Sync Button — replaced by unified Stop when sync is active */}
+            {syncActive ? (
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleSyncStop}
+                disabled={syncLoading}
+                className="recording-btn"
+                sx={{ fontWeight: 700 }}
+              >
+                {syncLoading ? <CircularProgress size={20} color="inherit" /> : "Stop All"}
+              </Button>
+            ) : (
               <Button
                 variant="contained"
                 color="warning"
@@ -411,6 +471,7 @@ function RecordingControl({ selectedFile, onDataChanged }) {
               >
                 Start Sensor & Video Recording
               </Button>
+            )}
           </Box>
         )}
         {status?.step === "place_weight" && (
