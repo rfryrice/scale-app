@@ -15,11 +15,15 @@ import re
 import time
 import threading
 from system_monitor import system_monitor
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
-# Only accept requests from the frontend origin
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+# Accept requests from the configured frontend origin (set FRONTEND_ORIGIN in .env for remote deployments)
+FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")
+CORS(app, resources={r"/*": {"origins": FRONTEND_ORIGIN}})
 
 # ── HX711 setup ───────────────────────────────────────────────────────────────
 DOUT_PIN   = 21
