@@ -53,7 +53,7 @@ const LoginForm = ( {onLogin, switchToRegister }) => {
         {error && <div style={{color: 'red'}}>{error}</div>}
         <div>
           Don't have an account?{' '}
-          <Link href="#" underline="hover" onClick={switchToRegister}>Register</Link>
+          {/* <Link href="#" underline="hover" onClick={switchToRegister}>Register</Link> */}
         </div>
       </form>
     </div>

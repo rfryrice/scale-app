@@ -105,6 +105,26 @@ def list_files():
     return jsonify({"csv_files": csv_files, "mp4_files": mp4_files})
 
 
+@app.route("/download", methods=["GET"])
+def download_file():
+    file = request.args.get('file')
+    if not file:
+        return jsonify({'error': 'Missing file parameter'}), 400
+
+    # Only allow .csv and .mp4 extensions
+    if not (file.endswith('.csv') or file.endswith('.mp4')):
+        return jsonify({'error': 'Invalid file type'}), 400
+
+    # Prevent path traversal
+    resolved = os.path.realpath(os.path.join(DATA_DIR, file))
+    if not resolved.startswith(os.path.realpath(DATA_DIR) + os.sep):
+        return jsonify({'error': 'Invalid file path'}), 400
+    if not os.path.isfile(resolved):
+        return jsonify({'error': 'File not found'}), 404
+
+    return send_file(resolved, as_attachment=True, download_name=os.path.basename(resolved))
+
+
 @app.route("/dashboard", methods=["GET"])
 def dashboard():
     os.makedirs(DATA_DIR, exist_ok=True)

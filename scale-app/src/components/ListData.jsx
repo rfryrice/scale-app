@@ -43,19 +43,11 @@ export default function ListData({ onFileSelect, selectedFile }) {
       <List>
         {files.map((file) => {
           // Determine download URL
-          let downloadUrl = "";
-          let displayName = file;
-          if (tab === 0) {
-            // CSV files are in the data directory
-            downloadUrl = `${API_URL}/data/${file}`;
-          } else {
-            // MP4 files are in the data/videos directory
-            downloadUrl = `${API_URL}/data/${file}`;
-            // Remove 'videos/' prefix for display
-            if (file.startsWith("videos/")) {
-              displayName = file.replace(/^videos\//, "");
-            }
-          }
+          const downloadUrl = `${API_URL}/download?file=${encodeURIComponent(file)}`;
+          // Remove leading 'videos/' prefix for display
+          const displayName = file.startsWith("videos/")
+            ? file.replace(/^videos\//, "")
+            : file;
           return (
             <ListItem key={file} disablePadding
               secondaryAction={
