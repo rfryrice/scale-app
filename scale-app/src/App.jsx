@@ -159,7 +159,7 @@ function App() {
               {isLoggedIn ? (
                 <>
                   <Grid container spacing={2} sx={{ height: "calc(100vh - 200px)" }}>
-                    <Grid item xs={12} md={3} sx={{ height: "100%" }}>
+                    <Grid item xs={12} md={3} sx={{ maxWidth: 320, minWidth: 220, width: "100%" }}>
                       <Card sx={{ height: "100%" }}>
                         <CardContent sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
                           <ListData
