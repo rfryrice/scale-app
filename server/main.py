@@ -21,7 +21,7 @@ import subprocess
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
  # Enable CORS for frontend only
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 # --- Video state ---
 video_lock = threading.Lock()
 video_streamer = None
@@ -497,4 +497,4 @@ if __name__ == "__main__":
     # Use host if expose to network
     #app.run(debug=True, port=8080, host="0.0.0.0", use_reloader=False)
 
-    app.run(debug=True, port=8080, use_reloader=False)
+    app.run(debug=True, port=8080, host="0.0.0.0", use_reloader=False)
