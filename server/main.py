@@ -21,7 +21,7 @@ import subprocess
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
  # Enable CORS for frontend only
-CORS(app, resources={r"/*": {"origins": "http://192.168.0.25:5173"}})
+CORS(app, resources={r"/*": {"origins": "*"}})
 # --- Video state ---
 video_lock = threading.Lock()
 video_streamer = None
