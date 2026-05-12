@@ -1,5 +1,6 @@
 from flask import request, jsonify, send_file, Response
 from config import app, db
+from flask_cors import CORS
 from models import Contact, User
 from video_streamer import VideoStreamer, CameraBusyException
 from sensor import (
@@ -19,6 +20,8 @@ import subprocess
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
+ # Enable CORS for frontend only
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 # --- Video state ---
 video_lock = threading.Lock()
 video_streamer = None
