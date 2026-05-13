@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FRONTEND_DIR="$ROOT_DIR/scale-app"
 BACKEND_DIR="$ROOT_DIR/server"
 VENV_DIR="$BACKEND_DIR/.venv"
+SOURCE_VENV_DIR="${SOURCE_VENV_DIR:-/home/pi/scale}"
 
 
 # Detect device's primary IP address (IPv4, non-loopback)
@@ -64,7 +65,25 @@ prepare_backend() {
   # shellcheck disable=SC1091
   source "$VENV_DIR/bin/activate"
   pip install --upgrade pip
-  pip install -r requirements.txt
+
+  if [[ -x "$SOURCE_VENV_DIR/bin/pip" ]]; then
+    log "Bootstrapping Python packages from existing venv: $SOURCE_VENV_DIR"
+    tmp_requirements="$(mktemp)"
+    "$SOURCE_VENV_DIR/bin/pip" freeze --local > "$tmp_requirements"
+    sed -i '/^\(pip\|setuptools\|wheel\)==/d' "$tmp_requirements"
+
+    if [[ -s "$tmp_requirements" ]]; then
+      pip install -r "$tmp_requirements"
+    else
+      log "Source venv package list was empty, falling back to requirements.txt"
+      pip install -r requirements.txt
+    fi
+
+    rm -f "$tmp_requirements"
+  else
+    log "Source venv not found at $SOURCE_VENV_DIR, installing from requirements.txt"
+    pip install -r requirements.txt
+  fi
 }
 
 start_backend() {
