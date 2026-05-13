@@ -158,20 +158,20 @@ function App() {
             <div className="dashboard-layout">
               {isLoggedIn ? (
                 <>
-                  <Grid container spacing={2} sx={{ height: "calc(100vh - 200px)" }}>
-                    <Grid item xs={12} md={3} sx={{ width: "100%" }}>
-                      <Card sx={{ height: "100%" }}>
+                  <Grid container spacing={2} alignItems="stretch" sx={{ width: "100%" }}>
+                    {/* Sidebar: ListData — 3 columns, height capped to match the main content column */}
+                    <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex", flexDirection: "column" }}>
+                      <Card sx={{ flex: 1, overflow: "auto" }}>
                         <CardContent sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
                           <ListData
                             key={listKey}
                             onFileSelect={handleFileSelect}
                             selectedFile={selectedFile}
-                            style={{ height: "100%" }}
                           />
                         </CardContent>
                       </Card>
                     </Grid>
-                    {/* Main content: Dashboard, SensorControl, VideoControl */}
+                    {/* Main content: 9 columns, fills remaining width */}
                     <Grid size={{ xs: 12, md: 9 }}>
                       <Grid container spacing={2} alignItems="stretch">
                         <Grid size={{ xs: 12, md: 8 }}>
