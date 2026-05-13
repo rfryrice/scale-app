@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Card, CardContent, Typography, Box } from "@mui/material";
+import { Typography, Box } from "@mui/material";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -36,6 +36,8 @@ export default function SystemMonitor() {
   });
   const [history, setHistory] = useState([]);
   const intervalRef = useRef(null);
+  const rootRef = useRef(null);
+  const [isNarrow, setIsNarrow] = useState(false);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -52,6 +54,16 @@ export default function SystemMonitor() {
     fetchStatus();
     intervalRef.current = setInterval(fetchStatus, 1000);
     return () => clearInterval(intervalRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!rootRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect?.width ?? 0;
+      setIsNarrow(width < 240);
+    });
+    observer.observe(rootRef.current);
+    return () => observer.disconnect();
   }, []);
 
   const cpuChartData = {
@@ -99,7 +111,7 @@ export default function SystemMonitor() {
   };
 
   return (
-    <Box sx={{
+    <Box ref={rootRef} sx={{
       background: '#181818',
       borderRadius: 2,
       boxShadow: 2,
@@ -107,23 +119,23 @@ export default function SystemMonitor() {
       minWidth: 0,
       maxWidth: '100%',
       color: '#fff',
-      justifyContent: 'center',
       width: '100%',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: 0,
     }}>
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, color: '#fff' }}>System Monitor</Typography>
       <Box
         sx={{
           display: 'flex',
           gap: 3,
-          mb: 2,
-          flexDirection: 'row',
+          mb: 0,
+          flex: 1,
+          minHeight: 0,
+          flexDirection: isNarrow ? 'column' : 'row',
           alignItems: 'stretch',
           width: '100%',
-          // Stack vertically if container < 280px
-          '@media (max-width:280px)': {
-            flexDirection: 'column',
-            gap: 2,
-          },
         }}
       >
         <Box
@@ -134,9 +146,7 @@ export default function SystemMonitor() {
             boxSizing: 'border-box',
             display: 'flex',
             flexDirection: 'column',
-            '@media (max-width:280px)': {
-              width: '100%',
-            },
+            minHeight: 0,
           }}
         >
           <Typography variant="subtitle2" sx={{ color: '#90caf9', fontWeight: 600 }}>CPU</Typography>
@@ -153,9 +163,7 @@ export default function SystemMonitor() {
             boxSizing: 'border-box',
             display: 'flex',
             flexDirection: 'column',
-            '@media (max-width:280px)': {
-              width: '100%',
-            },
+            minHeight: 0,
           }}
         >
           <Typography variant="subtitle2" sx={{ color: '#f48fb1', fontWeight: 600 }}>RAM</Typography>
