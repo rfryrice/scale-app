@@ -47,6 +47,10 @@ prepare_backend() {
   log "Preparing backend virtual environment"
   cd "$BACKEND_DIR"
 
+  log "Installing system dependency: python3-picamera2"
+  sudo apt-get update
+  sudo apt-get install -y python3-picamera2
+
   if [[ ! -d "$VENV_DIR" ]]; then
     python3 -m venv "$VENV_DIR"
   fi
