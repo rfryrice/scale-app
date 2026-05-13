@@ -47,9 +47,9 @@ prepare_backend() {
   log "Preparing backend virtual environment"
   cd "$BACKEND_DIR"
 
-  log "Installing system dependency: python3-picamera2"
+  log "Installing system dependencies: python3-picamera2 and libcap-dev"
   sudo apt-get update
-  sudo apt-get install -y python3-picamera2
+  sudo apt-get install -y python3-picamera2 libcap-dev
 
   if [[ ! -d "$VENV_DIR" ]]; then
     python3 -m venv "$VENV_DIR"
