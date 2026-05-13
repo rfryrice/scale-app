@@ -47,12 +47,18 @@ prepare_backend() {
   log "Preparing backend virtual environment"
   cd "$BACKEND_DIR"
 
-  log "Installing system dependencies: python3-picamera2 and libcap-dev"
+  log "Installing system dependencies: python3-picamera2, python3-libcamera, and libcap-dev"
   sudo apt-get update
-  sudo apt-get install -y python3-picamera2 libcap-dev
+  sudo apt-get install -y python3-picamera2 python3-libcamera libcap-dev
+
+  # Picamera2/libcamera come from apt, so this venv must see system site packages.
+  if [[ -d "$VENV_DIR" ]] && [[ -f "$VENV_DIR/pyvenv.cfg" ]] && ! grep -qi '^include-system-site-packages *= *true' "$VENV_DIR/pyvenv.cfg"; then
+    log "Recreating backend virtual environment with system site packages"
+    rm -rf "$VENV_DIR"
+  fi
 
   if [[ ! -d "$VENV_DIR" ]]; then
-    python3 -m venv "$VENV_DIR"
+    python3 -m venv --system-site-packages "$VENV_DIR"
   fi
 
   # shellcheck disable=SC1091
