@@ -5,7 +5,8 @@ import IconButton from "@mui/material/IconButton";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import Tooltip from "@mui/material/Tooltip";
-import { Typography, CardMedia, CardContent } from "@mui/material";
+import LinearProgress from "@mui/material/LinearProgress";
+import { Typography, CardMedia, CardContent, Box } from "@mui/material";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -16,7 +17,9 @@ function VideoControl({ selectedFile, videoStatus, recordStartTime, onStartVideo
   const [recordRuntime, setRecordRuntime] = useState("00:00:00");
   const intervalRef = useRef(null);
   const runtimeIntervalRef = useRef(null);
+  const compressionIntervalRef = useRef(null);
   const [showVideo, setShowVideo] = useState(false);
+  const [compressionState, setCompressionState] = useState(null); // null | progress object
   // Helper: is the selected file a video?
   const isVideoFile = selectedFile && selectedFile.endsWith('.mp4');
   // Direct video file URL
@@ -85,13 +88,37 @@ function VideoControl({ selectedFile, videoStatus, recordStartTime, onStartVideo
     }
   };
 
+  // Poll compression progress whenever it may be active
+  const isCompressing = compressionState !== null;
+  useEffect(() => {
+    if (!isCompressing) return;
+    compressionIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await axios.get(`${API_URL}/video/compression-progress`);
+        if (!res.data.active) {
+          setCompressionState(null);
+        } else {
+          setCompressionState(res.data);
+        }
+      } catch {
+        // network hiccup — keep polling
+      }
+    }, 2000);
+    return () => clearInterval(compressionIntervalRef.current);
+  }, [isCompressing]);
+
   // Stop
   const handleStop = async () => {
     setError("");
     try {
+      const wasRecording = videoStatus.mode === "record";
       await axios.post(`${API_URL}/video/stop`);
       setPolling(false);
       setRecordRuntime("00:00:00");
+      // Kick off compression progress polling for recordings
+      if (wasRecording) {
+        setCompressionState({ active: true, percent: 0, segments_done: 0, segments_total: 0, current_file: null });
+      }
     } catch (err) {
       setError("Failed to stop.");
     }
@@ -182,6 +209,30 @@ function VideoControl({ selectedFile, videoStatus, recordStartTime, onStartVideo
               </Typography>
             </div>
           )}
+
+          {/* Post-recording H.265 compression progress */}
+          {compressionState && (
+            <Box sx={{ mt: 2, p: 1.5, border: "1px solid #ccc", borderRadius: 1, background: "#f9f9f9" }}>
+              <Typography variant="body2" sx={{ fontWeight: "bold", mb: 0.5 }}>
+                Encoding to H.265…
+              </Typography>
+              {compressionState.segments_total > 0 && (
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  Segment {compressionState.segments_done + 1} of {compressionState.segments_total}
+                  {compressionState.current_file ? ` — ${compressionState.current_file}` : ""}
+                </Typography>
+              )}
+              <LinearProgress
+                variant="determinate"
+                value={compressionState.percent ?? 0}
+                sx={{ height: 10, borderRadius: 5 }}
+              />
+              <Typography variant="caption" sx={{ mt: 0.5, display: "block" }}>
+                {compressionState.percent ?? 0}% complete
+              </Typography>
+            </Box>
+          )}
+
           {error && <div style={{ color: "red", marginTop: "1em" }}>{error}</div>}
 
           {videoStatus.running && videoStatus.mode === "livestream" && (

@@ -38,11 +38,12 @@ if calibration_ratio is not None:
 set_hx(hx)
 
 # ── Shared state ──────────────────────────────────────────────────────────────
-video_lock     = threading.Lock()
-video_streamer = None
-video_mode     = None   # None | 'livestream' | 'record'
-video_filename = None
-sensor_thread  = None
+video_lock          = threading.Lock()
+video_streamer      = None
+video_mode          = None   # None | 'livestream' | 'record'
+video_filename      = None
+sensor_thread       = None
+compressing_streamer = None  # holds VideoStreamer while post-recording compression runs
 
 
 # =============================================================================
@@ -246,12 +247,29 @@ def api_calibrate_set_known_weight():
 
 @app.route('/video/status', methods=['GET'])
 def video_status():
+    global compressing_streamer
+    active_compression = (
+        (video_streamer is not None and video_streamer.compressing)
+        or (compressing_streamer is not None and compressing_streamer.compressing)
+    )
     return jsonify({
-        "running": video_streamer is not None,
-        "mode": video_mode,
-        "filename": video_filename,
-        "compressing": video_streamer.compressing if video_streamer is not None else False,
+        "running":    video_streamer is not None,
+        "mode":       video_mode,
+        "filename":   video_filename,
+        "compressing": active_compression,
     }), 200
+
+
+@app.route('/video/compression-progress', methods=['GET'])
+def compression_progress():
+    global compressing_streamer
+    # Prefer the dedicated post-recording reference, fall back to an active streamer.
+    streamer = compressing_streamer or video_streamer
+    if streamer is None or not streamer.compressing:
+        if compressing_streamer is not None and not compressing_streamer.compressing:
+            compressing_streamer = None
+        return jsonify({"active": False}), 200
+    return jsonify(streamer.compression_progress), 200
 
 
 @app.route('/video/start', methods=['POST'])
@@ -287,7 +305,7 @@ def start_video():
 
 @app.route('/video/stop', methods=['POST'])
 def stop_video():
-    global video_streamer, video_mode, video_filename
+    global video_streamer, video_mode, video_filename, compressing_streamer
     with video_lock:
         if video_streamer is None:
             return jsonify({"message": "No video in progress."}), 400
@@ -300,9 +318,15 @@ def stop_video():
 
         stopped_mode     = video_mode
         stopped_filename = video_filename
-        video_streamer   = None
-        video_mode       = None
-        video_filename   = None
+
+        # Keep a reference so /video/compression-progress can report progress
+        # after the stream has been cleared from video_streamer.
+        if video_streamer.compressing:
+            compressing_streamer = video_streamer
+
+        video_streamer = None
+        video_mode     = None
+        video_filename = None
 
     return jsonify({"message": f"{stopped_mode.capitalize()} stopped.",
                     "mode": stopped_mode, "filename": stopped_filename}), 200
