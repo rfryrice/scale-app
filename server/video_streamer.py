@@ -1,11 +1,9 @@
 import threading
 import time
-import subprocess
-import queue
 import os
 from picamera2 import Picamera2
 from picamera2.encoders import H264Encoder, Quality
-import cv2
+import cv2  # used for JPEG encoding in get_jpeg()
 
 class CameraBusyException(Exception):
     pass
@@ -28,30 +26,12 @@ class VideoStreamer:
         self.running    = True
 
         # Per-recording state (reset in start_recording)
-        self.record_filename         = None   # base path (no extension)
-        self.recording_encoder       = None
-        self._segment_index          = 0
-        self._segment_paths          = []     # ordered list of raw .h264 paths
-        self._queued_for_compression = set()
-        self._segment_timer          = None
-        self._segment_lock           = threading.Lock()
-
-        # Compression state — exposed to main.py for the progress endpoint
-        self.compressing = False
-        self.compression_progress = {
-            "active":         False,
-            "current_file":   None,
-            "percent":        0,
-            "segments_done":  0,
-            "segments_total": 0,
-        }
-
-        self._compression_queue = queue.Queue()
-        # Non-daemon: an in-flight compress finishes even if the Flask process exits.
-        self._compression_thread = threading.Thread(
-            target=self._compression_worker, daemon=False
-        )
-        self._compression_thread.start()
+        self.record_filename   = None   # base path (no extension)
+        self.recording_encoder = None
+        self._segment_index    = 0
+        self._segment_paths    = []     # ordered list of raw .h264 paths
+        self._segment_timer    = None
+        self._segment_lock     = threading.Lock()
 
         self.thread = threading.Thread(target=self._update_frame, daemon=True)
         self.thread.start()
@@ -99,11 +79,6 @@ class VideoStreamer:
         self.record_filename = os.path.join(video_dir, base)
         self._segment_index = 0
         self._segment_paths = []
-        self._queued_for_compression = set()
-        self.compression_progress = {
-            "active": False, "current_file": None,
-            "percent": 0, "segments_done": 0, "segments_total": 0,
-        }
 
         self._start_segment()
         self.recording = True
@@ -137,10 +112,8 @@ class VideoStreamer:
                     print(f"[WARN] Rotation encoder stop error: {e}")
                 self.recording_encoder = None
 
-            completed = self._segment_paths[-1]
             self._segment_index += 1
             self._start_segment()
-            self._enqueue_segment(completed)
 
     def stop_recording(self):
         with self._segment_lock:
@@ -157,128 +130,9 @@ class VideoStreamer:
                 self.recording_encoder = None
 
             self.recording = False
-            total = len(self._segment_paths)
-            self.compression_progress["segments_total"] = total
-
-            if self._segment_paths:
-                self._enqueue_segment(self._segment_paths[-1])
-
-            print(f"[INFO] Recording stopped — {total} segment(s) queued for compression.")
-
-    def _enqueue_segment(self, path):
-        if path in self._queued_for_compression:
-            return
-        if not os.path.exists(path):
-            print(f"[WARN] Segment file not found, skipping: {path}")
-            return
-        self._queued_for_compression.add(path)
-        self._compression_queue.put(path)
-        self.compressing = True
-        self.compression_progress["active"] = True
-        print(f"[INFO] Queued for compression: {os.path.basename(path)}")
-
-    # ── Compression worker ────────────────────────────────────────────────────
-
-    def _compression_worker(self):
-        """Sequentially compress queued .h264 segments to H.265 .mp4."""
-        while True:
-            try:
-                path = self._compression_queue.get(timeout=2)
-            except queue.Empty:
-                continue
-            if path is None:
-                break
-            self._compress_segment(path)
-            self._compression_queue.task_done()
-            if self._compression_queue.empty():
-                self.compressing = False
-                self.compression_progress["active"] = False
-
-    def _get_video_duration(self, path):
-        try:
-            result = subprocess.run(
-                ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-                 "-of", "default=noprint_wrappers=1:nokey=1", path],
-                capture_output=True, text=True, timeout=30,
-            )
-            return float(result.stdout.strip())
-        except Exception:
-            return None
-
-    def _compress_segment(self, source_path):
-        """Re-encode one H.264 segment to H.265/HEVC with live progress tracking.
-
-        Uses CRF 28 / fast preset — roughly half the file size of H.264 Quality.HIGH
-        with no perceptible quality loss at 640×480.  The raw .h264 is removed
-        atomically on success so storage is reclaimed as encoding proceeds.
-        """
-        seg_name    = os.path.basename(source_path)
-        output_path = os.path.splitext(source_path)[0] + ".mp4"
-        temp_path   = source_path + ".tmp.mp4"
-
-        self.compression_progress.update({
-            "active":       True,
-            "current_file": seg_name,
-            "percent":      0,
-        })
-
-        duration_s = self._get_video_duration(source_path)
-        print(f"[INFO] Compressing {seg_name}"
-              + (f" ({duration_s:.0f}s)" if duration_s else ""))
-
-        cmd = [
-            "ffmpeg", "-y",
-            "-i", source_path,
-            "-c:v", "libx265",
-            "-crf", "28",
-            "-preset", "fast",
-            "-tag:v", "hvc1",           # broad player/browser compatibility
-            "-movflags", "+faststart",  # move metadata to front for streaming
-            "-progress", "pipe:1",      # machine-readable progress → stdout
-            "-nostats",
-            temp_path,
-        ]
-
-        try:
-            proc = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True
-            )
-            for line in proc.stdout:
-                line = line.strip()
-                if line.startswith("out_time_ms=") and duration_s:
-                    try:
-                        ms = int(line.split("=")[1])
-                        pct = min(99, int(ms / 1000 / duration_s * 100))
-                        self.compression_progress["percent"] = pct
-                    except (ValueError, ZeroDivisionError):
-                        pass
-            proc.wait()
-
-            if proc.returncode == 0:
-                os.replace(temp_path, output_path)   # atomic swap
-                os.remove(source_path)               # reclaim raw H.264 storage
-                self.compression_progress["segments_done"] = (
-                    self.compression_progress.get("segments_done", 0) + 1
-                )
-                self.compression_progress["percent"] = 100
-                print(f"[INFO] Compressed → {os.path.basename(output_path)}")
-            else:
-                print(f"[ERROR] ffmpeg failed for {seg_name}")
-                if os.path.exists(temp_path):
-                    os.remove(temp_path)
-
-        except Exception as e:
-            print(f"[ERROR] Compression error for {seg_name}: {e}")
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
+            print(f"[INFO] Recording stopped — {len(self._segment_paths)} segment(s) saved.")
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
-
-    def recording_completed_successfully(self):
-        return bool(self._segment_paths) and any(
-            os.path.exists(os.path.splitext(p)[0] + ".mp4")
-            for p in self._segment_paths
-        )
 
     def release(self):
         self.running = False

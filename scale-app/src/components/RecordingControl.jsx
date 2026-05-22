@@ -280,15 +280,12 @@ function RecordingControl({ selectedFile, onDataChanged }) {
     setSyncLoading(true);
     setSyncMsg("");
     try {
-      await Promise.all([
-        axios.post(`${API_URL}/sensor/stop`),
-        axios.post(`${API_URL}/video/stop`),
-      ]);
+      const res = await axios.post(`${API_URL}/sync/stop`);
       setSensorRunning(false);
       setSyncActive(false);
       setVideoStatus({ running: false, mode: null, filename: null });
       setRecordRuntime("00:00:00");
-      setSyncMsg("Sensor and video recording stopped.");
+      setSyncMsg(res.data?.sensor?.message || "Sensor and video recording stopped.");
       if (onDataChanged) onDataChanged();
     } catch (err) {
       setSyncMsg(err?.response?.data?.message || "Error stopping sync recording");

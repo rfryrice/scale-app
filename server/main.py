@@ -38,12 +38,11 @@ if calibration_ratio is not None:
 set_hx(hx)
 
 # ── Shared state ──────────────────────────────────────────────────────────────
-video_lock          = threading.Lock()
-video_streamer      = None
-video_mode          = None   # None | 'livestream' | 'record'
-video_filename      = None
-sensor_thread       = None
-compressing_streamer = None  # holds VideoStreamer while post-recording compression runs
+video_lock     = threading.Lock()
+video_streamer = None
+video_mode     = None   # None | 'livestream' | 'record'
+video_filename = None
+sensor_thread  = None
 
 
 # =============================================================================
@@ -112,8 +111,13 @@ def list_files():
         for f in os.listdir(videos_dir)
         if f.endswith('.mp4')
     ]
+    h264_files = [
+        file_entry(os.path.join(videos_dir, f), os.path.join("videos", f))
+        for f in os.listdir(videos_dir)
+        if f.endswith('.h264')
+    ]
 
-    return jsonify({"csv_files": csv_files, "mp4_files": mp4_files})
+    return jsonify({"csv_files": csv_files, "mp4_files": mp4_files, "h264_files": h264_files})
 
 
 @app.route("/download", methods=["GET"])
@@ -122,8 +126,8 @@ def download_file():
     if not file:
         return jsonify({'error': 'Missing file parameter'}), 400
 
-    # Only allow .csv and .mp4 extensions
-    if not (file.endswith('.csv') or file.endswith('.mp4')):
+    # Only allow .csv, .mp4, and .h264 extensions
+    if not (file.endswith('.csv') or file.endswith('.mp4') or file.endswith('.h264')):
         return jsonify({'error': 'Invalid file type'}), 400
 
     # Prevent path traversal
@@ -247,29 +251,11 @@ def api_calibrate_set_known_weight():
 
 @app.route('/video/status', methods=['GET'])
 def video_status():
-    global compressing_streamer
-    active_compression = (
-        (video_streamer is not None and video_streamer.compressing)
-        or (compressing_streamer is not None and compressing_streamer.compressing)
-    )
     return jsonify({
-        "running":    video_streamer is not None,
-        "mode":       video_mode,
-        "filename":   video_filename,
-        "compressing": active_compression,
+        "running":  video_streamer is not None,
+        "mode":     video_mode,
+        "filename": video_filename,
     }), 200
-
-
-@app.route('/video/compression-progress', methods=['GET'])
-def compression_progress():
-    global compressing_streamer
-    # Prefer the dedicated post-recording reference, fall back to an active streamer.
-    streamer = compressing_streamer or video_streamer
-    if streamer is None or not streamer.compressing:
-        if compressing_streamer is not None and not compressing_streamer.compressing:
-            compressing_streamer = None
-        return jsonify({"active": False}), 200
-    return jsonify(streamer.compression_progress), 200
 
 
 @app.route('/video/start', methods=['POST'])
@@ -305,7 +291,7 @@ def start_video():
 
 @app.route('/video/stop', methods=['POST'])
 def stop_video():
-    global video_streamer, video_mode, video_filename, compressing_streamer
+    global video_streamer, video_mode, video_filename
     with video_lock:
         if video_streamer is None:
             return jsonify({"message": "No video in progress."}), 400
@@ -318,15 +304,9 @@ def stop_video():
 
         stopped_mode     = video_mode
         stopped_filename = video_filename
-
-        # Keep a reference so /video/compression-progress can report progress
-        # after the stream has been cleared from video_streamer.
-        if video_streamer.compressing:
-            compressing_streamer = video_streamer
-
-        video_streamer = None
-        video_mode     = None
-        video_filename = None
+        video_streamer   = None
+        video_mode       = None
+        video_filename   = None
 
     return jsonify({"message": f"{stopped_mode.capitalize()} stopped.",
                     "mode": stopped_mode, "filename": stopped_filename}), 200
@@ -394,8 +374,41 @@ def video_file():
 
 
 # =============================================================================
-# Sync — start sensor + video recording together
+# Sync — start/stop sensor + video recording together
 # =============================================================================
+
+@app.route('/sync/stop', methods=['POST'])
+def stop_sensor_and_video():
+    global sensor_thread, video_streamer, video_mode, video_filename
+
+    # Stop sensor
+    if sensor.sensor_thread_event.is_set():
+        sensor.sensor_thread_event.clear()
+        sensor_thread = None
+        sensor_resp = {"message": "Sensor stopped.",
+                       "filename": f"{time.strftime('%Y-%m-%d')}.csv"}
+    else:
+        sensor_resp = {"message": "Sensor was not running."}
+
+    # Stop video
+    with video_lock:
+        if video_streamer is None:
+            video_resp = {"message": "No video in progress."}
+        else:
+            try:
+                if video_mode == 'record':
+                    video_streamer.stop_recording()
+                video_streamer.release()
+            except Exception as e:
+                return jsonify({"message": f"Error stopping video: {e}"}), 500
+            video_resp = {"message": f"{video_mode.capitalize()} stopped.",
+                          "mode": video_mode, "filename": video_filename}
+            video_streamer = None
+            video_mode     = None
+            video_filename = None
+
+    return jsonify({"sensor": sensor_resp, "video": video_resp}), 200
+
 
 @app.route('/sync/start', methods=['POST'])
 def start_sensor_and_video():

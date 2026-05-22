@@ -29,8 +29,10 @@ export default function ListData({ onFileSelect, selectedFile }) {
       const res = await axios.get(`${API_URL}/list-files`);
       if (tab === 0) {
         setFiles(res.data.csv_files || []);
-      } else {
+      } else if (tab === 1) {
         setFiles(res.data.mp4_files || []);
+      } else {
+        setFiles(res.data.h264_files || []);
       }
     };
     fetchFiles();
@@ -46,6 +48,7 @@ export default function ListData({ onFileSelect, selectedFile }) {
       <Tabs value={tab} onChange={handleTabChange} centered>
         <Tab label="Data (.csv)" />
         <Tab label="Videos (.mp4)" />
+        <Tab label="Raw (.h264)" />
       </Tabs>
       <List>
         {files.map((entry) => {
